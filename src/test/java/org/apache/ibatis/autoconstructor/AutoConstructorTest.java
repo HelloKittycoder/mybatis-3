@@ -59,6 +59,9 @@ class AutoConstructorTest {
   void primitiveSubjects() {
     try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       final AutoConstructorMapper mapper = sqlSession.getMapper(AutoConstructorMapper.class);
+      // 调用getSubject方法
+      PrimitiveSubject ps = mapper.getSubject(2);
+      System.out.println(ps);
       assertThrows(PersistenceException.class, mapper::getSubjects);
     }
   }
@@ -67,6 +70,9 @@ class AutoConstructorTest {
   void annotatedSubject() {
     try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       final AutoConstructorMapper mapper = sqlSession.getMapper(AutoConstructorMapper.class);
+      // 调用getAnnotatedSubjects方法
+      List<AnnotatedSubject> list = mapper.getAnnotatedSubjects();
+      System.out.println(list);
       verifySubjects(mapper.getAnnotatedSubjects());
     }
   }
@@ -75,6 +81,10 @@ class AutoConstructorTest {
   void badSubject() {
     try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       final AutoConstructorMapper mapper = sqlSession.getMapper(AutoConstructorMapper.class);
+      // 调用getBadSubjects方法
+      List<BadSubject> list = mapper.getBadSubjects();
+      System.out.println(list);
+      // 预期会报异常
       assertThrows(PersistenceException.class, mapper::getBadSubjects);
     }
   }
@@ -83,6 +93,11 @@ class AutoConstructorTest {
   void extensiveSubject() {
     try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
       final AutoConstructorMapper mapper = sqlSession.getMapper(AutoConstructorMapper.class);
+      // 调用getExtensiveSubject方法
+      System.out.println("=====第一次调用====");
+      List<ExtensiveSubject> list = mapper.getExtensiveSubject();
+      System.out.println(list);
+      System.out.println("=====第二次调用====");
       verifySubjects(mapper.getExtensiveSubject());
     }
   }

@@ -27,6 +27,7 @@ public class BadSubject {
     this.name = name;
     this.age = age;
     this.height = height;
+    // this.height = new Height();
     this.weight = weight == null ? 0 : weight;
   }
 
