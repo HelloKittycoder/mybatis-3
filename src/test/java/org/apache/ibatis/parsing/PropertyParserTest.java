@@ -60,12 +60,13 @@ class PropertyParserTest {
   @Test
   void applyDefaultValue() {
     Properties props = new Properties();
-    props.setProperty(PropertyParser.KEY_ENABLE_DEFAULT_VALUE, "true");
-    Assertions.assertThat(PropertyParser.parse("${key:default}", props)).isEqualTo("default");
+    // props.setProperty(PropertyParser.KEY_ENABLE_DEFAULT_VALUE, "true");
+    System.out.println(PropertyParser.parse("${key:default}", props)); // 测试带有默认分隔符，但不启用默认值的情况
+    /*Assertions.assertThat(PropertyParser.parse("${key:default}", props)).isEqualTo("default");
     Assertions.assertThat(PropertyParser.parse("SELECT * FROM ${tableName:users} ORDER BY ${orderColumn:id}", props)).isEqualTo("SELECT * FROM users ORDER BY id");
     Assertions.assertThat(PropertyParser.parse("${key:}", props)).isEmpty();
     Assertions.assertThat(PropertyParser.parse("${key: }", props)).isEqualTo(" ");
-    Assertions.assertThat(PropertyParser.parse("${key::}", props)).isEqualTo(":");
+    Assertions.assertThat(PropertyParser.parse("${key::}", props)).isEqualTo(":");*/
   }
 
   @Test

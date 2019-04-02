@@ -20,7 +20,13 @@ package org.apache.ibatis.parsing;
  */
 public class GenericTokenParser {
 
+  /**
+   * 开始的Token字符串
+   */
   private final String openToken;
+  /**
+   * 结束的Token字符串
+   */
   private final String closeToken;
   private final TokenHandler handler;
 
@@ -35,52 +41,78 @@ public class GenericTokenParser {
       return "";
     }
     // search open token
+    // 寻找开始的openToken的位置
     int start = text.indexOf(openToken);
-    if (start == -1) {
+    if (start == -1) { // 找不到，直接返回
       return text;
     }
     char[] src = text.toCharArray();
-    int offset = 0;
+    int offset = 0; // 起始查找位置
+    // 结果
     final StringBuilder builder = new StringBuilder();
-    StringBuilder expression = null;
+    StringBuilder expression = null; // 匹配到openToken和closeToken之间的表达式
+    // 循环匹配
     while (start > -1) {
+      // 转义字符
       if (start > 0 && src[start - 1] == '\\') {
         // this open token is escaped. remove the backslash and continue.
+        // 因为openToken前面一个位置是\转义字符，所以忽略\
+        // 将[offset, start-offset-1]和openToken的内容，添加到builder中
         builder.append(src, offset, start - offset - 1).append(openToken);
+        // 修改offset
         offset = start + openToken.length();
+      // 非转义字符
       } else {
         // found open token. let's search close token.
+        // 创建/充值expression对象
         if (expression == null) {
           expression = new StringBuilder();
         } else {
           expression.setLength(0);
         }
+        // 将offset和openToken之间的内容，添加到builder中
         builder.append(src, offset, start - offset);
+        // 修改offset
         offset = start + openToken.length();
+        // 寻找结束的closeToken的位置
         int end = text.indexOf(closeToken, offset);
         while (end > -1) {
+          // 转义
           if (end > offset && src[end - 1] == '\\') {
             // this close token is escaped. remove the backslash and continue.
+            // 因为endToken前面一个位置是\转义字符，所以忽略\
+            // 将[offset, end-offset-1]和endToken的内容，添加到builder中
             expression.append(src, offset, end - offset - 1).append(closeToken);
+            // 修改offset
             offset = end + closeToken.length();
+            // 继续，寻找结束的closeToken的位置
             end = text.indexOf(closeToken, offset);
+          // 非转义
           } else {
+            // 将[offset, end-offset]的内容，添加到builder中
             expression.append(src, offset, end - offset);
             offset = end + closeToken.length();
             break;
           }
         }
+        // 拼接内容
         if (end == -1) {
           // close token was not found.
+          // closeToken未找到，直接拼接
           builder.append(src, start, src.length - start);
+          // 修改offset
           offset = src.length;
         } else {
+          // <x> closeToken找到，将expression提交给handler处理，并将处理结果添加到builder中
           builder.append(handler.handleToken(expression.toString()));
+          // 修改offset
           offset = end + closeToken.length();
         }
       }
+      // 继续，寻找开始的openToken的位置
       start = text.indexOf(openToken, offset);
     }
+    // 拼接剩余的部分
     if (offset < src.length) {
       builder.append(src, offset, src.length - offset);
     }
