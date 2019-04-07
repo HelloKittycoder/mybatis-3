@@ -18,15 +18,31 @@ package org.apache.ibatis.reflection.property;
 import java.util.Iterator;
 
 /**
+ * 属性名称拆分器
  * @author Clinton Begin
  */
 public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
+  /**
+   * 当前字符串
+   */
   private String name;
+  /**
+   * 索引的{@link #name}，因为{@link #name}如果存在{@link #index}会被更改
+   */
   private final String indexedName;
+  /**
+   * 编号
+   * 对于数组 name[0]，则index=0
+   * 对于Map map[key]，则index=key
+   */
   private String index;
+  /**
+   * 剩余字符串
+   */
   private final String children;
 
   public PropertyTokenizer(String fullname) {
+    // <1> 初始化name、children字符串，使用点号作为分隔符
     int delim = fullname.indexOf('.');
     if (delim > -1) {
       name = fullname.substring(0, delim);
@@ -35,7 +51,9 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
       name = fullname;
       children = null;
     }
+    // <2> 记录当前name
     indexedName = name;
+    // 若存在[，则获得index，并修改name
     delim = name.indexOf('[');
     if (delim > -1) {
       index = name.substring(delim + 1, name.length() - 1);
@@ -59,11 +77,13 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
     return children;
   }
 
+  // 判断是否有下一个元素
   @Override
   public boolean hasNext() {
     return children != null;
   }
 
+  // 迭代获得下一个PropertyTokenizer对象
   @Override
   public PropertyTokenizer next() {
     return new PropertyTokenizer(children);

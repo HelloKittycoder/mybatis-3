@@ -15,21 +15,12 @@
  */
 package org.apache.ibatis.reflection.factory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.apache.ibatis.reflection.ReflectionException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * DefaultObjectFactoryTest
@@ -93,5 +84,50 @@ class DefaultObjectFactoryTest {
     DefaultObjectFactory defaultObjectFactory = new DefaultObjectFactory();
     Set set = defaultObjectFactory.create(Set.class);
     Assertions.assertTrue(set instanceof HashSet, " set should be HashSet");
+  }
+
+  // 模仿instantiateClass中的参数拼接（使用jdk1.8的特性）
+  @Test
+  void imitateParamJoin() {
+    List<Student> list = new ArrayList<>();
+    Student student = new Student("1", "张三");
+    list.add(student);
+    student = new Student("2", "李四");
+    list.add(student);
+    System.out.println(Optional.ofNullable(list).orElseGet(Collections::emptyList)
+            .stream().map(Student::myString).collect(Collectors.joining(",")));
+  }
+}
+
+class Student {
+  private String id;
+  private String name;
+
+  public Student() {
+  }
+
+  public Student(String id, String name) {
+    this.id = id;
+    this.name = name;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String myString() {
+    return "id==" + id + "+++name==" + name;
   }
 }

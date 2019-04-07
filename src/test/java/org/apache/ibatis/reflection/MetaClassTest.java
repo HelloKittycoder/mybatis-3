@@ -15,16 +15,14 @@
  */
 package org.apache.ibatis.reflection;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.ibatis.domain.misc.RichType;
+import org.apache.ibatis.domain.misc.generics.GenericConcrete;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
-import org.apache.ibatis.domain.misc.RichType;
-import org.apache.ibatis.domain.misc.generics.GenericConcrete;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MetaClassTest {
 
@@ -64,6 +62,10 @@ class MetaClassTest {
     assertTrue(meta.hasGetter("richType.richList"));
     assertTrue(meta.hasGetter("richType.richMap"));
     assertTrue(meta.hasGetter("richType.richList[0]"));
+    assertTrue(meta.hasGetter("richType.richTypeList[0].richField"));
+
+    // 测试getGetterType方法
+    assertEquals(String.class, meta.getGetterType("richType.richTypeList[0].richField"));
 
     assertEquals("richType.richProperty", meta.findProperty("richType.richProperty", false));
 

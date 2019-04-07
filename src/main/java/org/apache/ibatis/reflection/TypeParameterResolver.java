@@ -15,14 +15,7 @@
  */
 package org.apache.ibatis.reflection;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.GenericArrayType;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
+import java.lang.reflect.*;
 import java.util.Arrays;
 
 /**
@@ -31,32 +24,47 @@ import java.util.Arrays;
 public class TypeParameterResolver {
 
   /**
+   * 解析属性类型
+   *
    * @return The field type as {@link Type}. If it has type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
    */
   public static Type resolveFieldType(Field field, Type srcType) {
+    // 属性类型
     Type fieldType = field.getGenericType();
+    // 定义的类
     Class<?> declaringClass = field.getDeclaringClass();
+    // 解析类型
     return resolveType(fieldType, srcType, declaringClass);
   }
 
   /**
+   * 解析方法返回类型
+   *
    * @return The return type of the method as {@link Type}. If it has type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
    */
   public static Type resolveReturnType(Method method, Type srcType) {
+    // 属性类型
     Type returnType = method.getGenericReturnType();
+    // 定义的类
     Class<?> declaringClass = method.getDeclaringClass();
+    // 解析类型
     return resolveType(returnType, srcType, declaringClass);
   }
 
   /**
+   * 解析方法参数的类型数组
+   *
    * @return The parameter types of the method as an array of {@link Type}s. If they have type parameters in the declaration,<br>
    *         they will be resolved to the actual runtime {@link Type}s.
    */
   public static Type[] resolveParamTypes(Method method, Type srcType) {
+    // 获得方法参数类型数组
     Type[] paramTypes = method.getGenericParameterTypes();
+    // 定义的类
     Class<?> declaringClass = method.getDeclaringClass();
+    // 挨个解析类型
     Type[] result = new Type[paramTypes.length];
     for (int i = 0; i < paramTypes.length; i++) {
       result[i] = resolveType(paramTypes[i], srcType, declaringClass);
@@ -64,6 +72,13 @@ public class TypeParameterResolver {
     return result;
   }
 
+  /**
+   * 解析类型（根据type对应不同的Type类型，调用不同的方法，进行解析）
+   * @param type 类型
+   * @param srcType 来源类型
+   * @param declaringClass 定义的类
+   * @return 解析后的类型
+   */
   private static Type resolveType(Type type, Type srcType, Class<?> declaringClass) {
     if (type instanceof TypeVariable) {
       return resolveTypeVar((TypeVariable<?>) type, srcType, declaringClass);
@@ -77,6 +92,7 @@ public class TypeParameterResolver {
   }
 
   private static Type resolveGenericArrayType(GenericArrayType genericArrayType, Type srcType, Class<?> declaringClass) {
+    // 【1】解析componentType
     Type componentType = genericArrayType.getGenericComponentType();
     Type resolvedComponentType = null;
     if (componentType instanceof TypeVariable) {
@@ -86,6 +102,7 @@ public class TypeParameterResolver {
     } else if (componentType instanceof ParameterizedType) {
       resolvedComponentType = resolveParameterizedType((ParameterizedType) componentType, srcType, declaringClass);
     }
+    // 【2】创建GenericArrayTypeImpl对象
     if (resolvedComponentType instanceof Class) {
       return Array.newInstance((Class<?>) resolvedComponentType, 0).getClass();
     } else {
@@ -93,8 +110,16 @@ public class TypeParameterResolver {
     }
   }
 
+  /**
+   * 解析ParameterizedType类型
+   * @param parameterizedType ParameterizedType类型
+   * @param srcType 来源类型
+   * @param declaringClass 定义的类
+   * @return 解析后的类型
+   */
   private static ParameterizedType resolveParameterizedType(ParameterizedType parameterizedType, Type srcType, Class<?> declaringClass) {
     Class<?> rawType = (Class<?>) parameterizedType.getRawType();
+    // 【1】解析<>中的实际类型
     Type[] typeArgs = parameterizedType.getActualTypeArguments();
     Type[] args = new Type[typeArgs.length];
     for (int i = 0; i < typeArgs.length; i++) {
@@ -108,12 +133,23 @@ public class TypeParameterResolver {
         args[i] = typeArgs[i];
       }
     }
+    // 【2】创建ParameterizedTypeImpl对象
     return new ParameterizedTypeImpl(rawType, null, args);
   }
 
+  /**
+   * 解析WildcardType类型
+   * @param wildcardType
+   * @param srcType
+   * @param declaringClass
+   * @return
+   */
   private static Type resolveWildcardType(WildcardType wildcardType, Type srcType, Class<?> declaringClass) {
+    // <1.1> 解析泛型表达式下界（下限super）
     Type[] lowerBounds = resolveWildcardTypeBounds(wildcardType.getLowerBounds(), srcType, declaringClass);
+    // <1.2> 解析泛型表达式上界（上限extends）
     Type[] upperBounds = resolveWildcardTypeBounds(wildcardType.getUpperBounds(), srcType, declaringClass);
+    // 创建WildcardTypeImpl对象
     return new WildcardTypeImpl(lowerBounds, upperBounds);
   }
 
@@ -218,11 +254,29 @@ public class TypeParameterResolver {
     super();
   }
 
+  /**
+   * ParameterizedType实现类
+   *
+   * 参数化类型，即泛型。例如：List<T>、Map<K,V>等带有参数化的配置
+   */
   static class ParameterizedTypeImpl implements ParameterizedType {
+
+    // 以List<T>举例
+    /**
+     * <>前面实际类型
+     * 如：List
+     */
     private Class<?> rawType;
 
+    /**
+     * 如果该类型是某个类的内部类，则获取其所在的类（所有者类型）；否则返回null
+     */
     private Type ownerType;
 
+    /**
+     * <>中实际类型
+     * 如：T
+     */
     private Type[] actualTypeArguments;
 
     public ParameterizedTypeImpl(Class<?> rawType, Type ownerType, Type[] actualTypeArguments) {
@@ -253,9 +307,20 @@ public class TypeParameterResolver {
     }
   }
 
+  /**
+   * WildcardType实现类
+   * 泛型表达式（或者通配符表达式），即? extends Number、? super Integer这样的表达式
+   * WildcardType虽然是Type的子接口，但却不是Java类型中的一种
+   */
   static class WildcardTypeImpl implements WildcardType {
+    /**
+     * 泛型表达式下界（下限super）
+     */
     private Type[] lowerBounds;
 
+    /**
+     * 泛型表达式上界（上限extends）
+     */
     private Type[] upperBounds;
 
     WildcardTypeImpl(Type[] lowerBounds, Type[] upperBounds) {
@@ -275,7 +340,16 @@ public class TypeParameterResolver {
     }
   }
 
+  /**
+   * GenericArrayType实现类
+   * 泛型数组类型，用来描述ParameterizedType、TypeVariable类型的数组；
+   * 即List<T>[]、T[]等
+   */
   static class GenericArrayTypeImpl implements GenericArrayType {
+
+    /**
+     * 数组元素类型
+     */
     private Type genericComponentType;
 
     GenericArrayTypeImpl(Type genericComponentType) {

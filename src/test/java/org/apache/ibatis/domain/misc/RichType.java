@@ -36,6 +36,9 @@ public class RichType {
     }
   };
 
+  // 用来测试MetaClass.getGetterType中获取泛型部分的代码
+  private List<RichType> richTypeList;
+
   public RichType getRichType() {
     return richType;
   }
@@ -66,5 +69,13 @@ public class RichType {
 
   public void setRichMap(Map richMap) {
     this.richMap = richMap;
+  }
+
+  public List<RichType> getRichTypeList() {
+    return richTypeList;
+  }
+
+  public void setRichTypeList(List<RichType> richTypeList) {
+    this.richTypeList = richTypeList;
   }
 }

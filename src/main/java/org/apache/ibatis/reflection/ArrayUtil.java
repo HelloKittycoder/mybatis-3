@@ -23,6 +23,8 @@ import java.util.Arrays;
 public class ArrayUtil {
 
   /**
+   * 返回hash值
+   *
    * Returns a hash code for {@code obj}.
    *
    * @param obj
@@ -35,9 +37,11 @@ public class ArrayUtil {
       return 0;
     }
     final Class<?> clazz = obj.getClass();
+    // 普通类
     if (!clazz.isArray()) {
       return obj.hashCode();
     }
+    // 数组类型
     final Class<?> componentType = clazz.getComponentType();
     if (long.class.equals(componentType)) {
       return Arrays.hashCode((long[]) obj);
@@ -61,6 +65,8 @@ public class ArrayUtil {
   }
 
   /**
+   * 数组对象比较
+   *
    * Compares two objects. Returns <code>true</code> if
    * <ul>
    * <li>{@code thisObj} and {@code thatObj} are both <code>null</code></li>
@@ -86,9 +92,11 @@ public class ArrayUtil {
     if (!clazz.equals(thatObj.getClass())) {
       return false;
     }
+    // 普通类
     if (!clazz.isArray()) {
       return thisObj.equals(thatObj);
     }
+    // 数组类型
     final Class<?> componentType = clazz.getComponentType();
     if (long.class.equals(componentType)) {
       return Arrays.equals((long[]) thisObj, (long[]) thatObj);
@@ -112,6 +120,8 @@ public class ArrayUtil {
   }
 
   /**
+   * 数组toString方法
+   *
    * If the {@code obj} is an array, toString() method of {@link Arrays} is called. Otherwise
    * {@link Object#toString()} is called. Returns "null" if {@code obj} is <code>null</code>.
    *
@@ -124,9 +134,11 @@ public class ArrayUtil {
       return "null";
     }
     final Class<?> clazz = obj.getClass();
+    // 普通类
     if (!clazz.isArray()) {
       return obj.toString();
     }
+    // 数组类型
     final Class<?> componentType = obj.getClass().getComponentType();
     if (long.class.equals(componentType)) {
       return Arrays.toString((long[]) obj);

@@ -15,23 +15,42 @@
  */
 package org.apache.ibatis.reflection;
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import java.io.Serializable;
-import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import static com.googlecode.catchexception.apis.BDDCatchException.*;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static com.googlecode.catchexception.apis.BDDCatchException.caughtException;
+import static com.googlecode.catchexception.apis.BDDCatchException.when;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReflectorTest {
+
+  // 测试computeIfAbsent方法
+  @Test
+  void testComputeIfAbsent() {
+    Map<String, List<Integer>> myMap = new HashMap<>();
+    List<Integer> tempList = new ArrayList<>();
+    tempList.add(100);
+    myMap.put("aaa", tempList);
+    List<Integer> list1 = myMap.computeIfAbsent("aaa", k -> new ArrayList<>());
+    list1.add(1);
+    System.out.println(myMap);
+  }
 
   @Test
   void testGetSetterType() {
     ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
     Reflector reflector = reflectorFactory.findForClass(Section.class);
     Assertions.assertEquals(Long.class, reflector.getSetterType("id"));
+    // 测试缓存Reflector对象的方法
+    System.out.println(reflectorFactory.findForClass(Section.class));
   }
 
   @Test
