@@ -17,6 +17,19 @@ package org.apache.ibatis.exceptions;
 
 /**
  * @author Clinton Begin
+ *
+ * reflection 包：ReflectionException
+ * logging 包：LogException
+ * builder 包：BuilderException、IncompleteElementException
+ * scripting 包：ScriptingException
+ * binding 包：BindingException
+ * type 包：TypeException
+ * session 包：SqlSessionException
+ * cache 包：CacheException
+ * transaction 包：TransactionException
+ * datasource 包：DataSourceException
+ * executor 包：ResultMapException、ExecutorException、BatchExecutorException
+ * plugin 包：PluginException
  */
 @SuppressWarnings("deprecation")
 public class PersistenceException extends IbatisException {
