@@ -37,19 +37,50 @@ import org.apache.ibatis.io.Resources;
  */
 public class UnpooledDataSource implements DataSource {
 
+  /**
+   * Driver类加载器
+   */
   private ClassLoader driverClassLoader;
+  /**
+   * Driver属性
+   */
   private Properties driverProperties;
+  /**
+   * 已注册的Driver映射
+   *
+   * KEY：Driver类名
+   * VALUE：Driver对象
+   */
   private static Map<String, Driver> registeredDrivers = new ConcurrentHashMap<>();
 
+  /**
+   * Driver类名
+   */
   private String driver;
+  /**
+   * 数据库URL
+   */
   private String url;
+  /**
+   * 数据库用户名
+   */
   private String username;
+  /**
+   * 数据库密码
+   */
   private String password;
 
+  /**
+   * 是否自动提交事务
+   */
   private Boolean autoCommit;
+  /**
+   * 默认事务隔离级别
+   */
   private Integer defaultTransactionIsolationLevel;
 
   static {
+    // 初始化registeredDrivers
     Enumeration<Driver> drivers = DriverManager.getDrivers();
     while (drivers.hasMoreElements()) {
       Driver driver = drivers.nextElement();
@@ -183,39 +214,51 @@ public class UnpooledDataSource implements DataSource {
   }
 
   private Connection doGetConnection(String username, String password) throws SQLException {
+    // 创建Properties对象
     Properties props = new Properties();
+    // 设置driverProperties到props中
     if (driverProperties != null) {
       props.putAll(driverProperties);
     }
+    // 设置user和password到props中
     if (username != null) {
       props.setProperty("user", username);
     }
     if (password != null) {
       props.setProperty("password", password);
     }
+    // 执行获得Connection连接
     return doGetConnection(props);
   }
 
   private Connection doGetConnection(Properties properties) throws SQLException {
+    // <1> 初始化Driver
     initializeDriver();
+    // <2> 获得Connection对象
     Connection connection = DriverManager.getConnection(url, properties);
+    // <3> 配置Connection对象
     configureConnection(connection);
     return connection;
   }
 
   private synchronized void initializeDriver() throws SQLException {
+    // <1> 判断registeredDrivers是否已经存在该driver，若不存在，则进行初始化
     if (!registeredDrivers.containsKey(driver)) {
       Class<?> driverType;
       try {
+        // <2> 获得driver类
         if (driverClassLoader != null) {
           driverType = Class.forName(driver, true, driverClassLoader);
         } else {
           driverType = Resources.classForName(driver);
         }
+        // <3> 创建Driver对象
         // DriverManager requires the driver to be loaded via the system ClassLoader.
         // http://www.kfu.com/~nsayer/Java/dyn-jdbc.html
         Driver driverInstance = (Driver)driverType.newInstance();
+        // 创建DriverProxy对象，并注册到DriverManager中
         DriverManager.registerDriver(new DriverProxy(driverInstance));
+        // 添加到registeredDrivers中
         registeredDrivers.put(driver, driverInstance);
       } catch (Exception e) {
         throw new SQLException("Error setting driver on UnpooledDataSource. Cause: " + e);
@@ -224,9 +267,11 @@ public class UnpooledDataSource implements DataSource {
   }
 
   private void configureConnection(Connection conn) throws SQLException {
+    // 设置自动提交
     if (autoCommit != null && autoCommit != conn.getAutoCommit()) {
       conn.setAutoCommit(autoCommit);
     }
+    // 设置事务隔离级别
     if (defaultTransactionIsolationLevel != null) {
       conn.setTransactionIsolation(defaultTransactionIsolationLevel);
     }
@@ -269,9 +314,10 @@ public class UnpooledDataSource implements DataSource {
       return this.driver.jdbcCompliant();
     }
 
+    // 为什么要使用DriverProxy呢？，因为<4>处，使用mybatis自定义的Logger对象
     // @Override only valid jdk7+
     public Logger getParentLogger() {
-      return Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
+      return Logger.getLogger(Logger.GLOBAL_LOGGER_NAME); // <4>
     }
   }
 

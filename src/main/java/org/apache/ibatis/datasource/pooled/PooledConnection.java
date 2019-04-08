@@ -28,17 +28,50 @@ import org.apache.ibatis.reflection.ExceptionUtil;
  */
 class PooledConnection implements InvocationHandler {
 
+  /**
+   * 关闭Connection方法名
+   */
   private static final String CLOSE = "close";
+  /**
+   * JDK Proxy的接口
+   */
   private static final Class<?>[] IFACES = new Class<?>[] { Connection.class };
 
+  /**
+   * 对象的标识，基于 {@link #realConnection} 求hashCode
+   */
   private final int hashCode;
+  /**
+   * 所属的PooledDataSource对象
+   */
   private final PooledDataSource dataSource;
+  /**
+   * 真实的Connection连接
+   */
   private final Connection realConnection;
+  /**
+   * 代理的Connection连接，即 {@link PooledConnection} 这个动态代理的Connection对象
+   */
   private final Connection proxyConnection;
+  /**
+   * 从连接池中，获取走的时间戳
+   */
   private long checkoutTimestamp;
+  /**
+   * 对象创建时间
+   */
   private long createdTimestamp;
+  /**
+   * 最后更新时间
+   */
   private long lastUsedTimestamp;
+  /**
+   * 连接的标识，即 {@link PooledDataSource#expectedConnectionTypeCode}
+   */
   private int connectionTypeCode;
+  /**
+   * 是否有效
+   */
   private boolean valid;
 
   /**
@@ -54,6 +87,7 @@ class PooledConnection implements InvocationHandler {
     this.createdTimestamp = System.currentTimeMillis();
     this.lastUsedTimestamp = System.currentTimeMillis();
     this.valid = true;
+    // <1> 创建代理的Connection对象
     this.proxyConnection = (Connection) Proxy.newProxyInstance(Connection.class.getClassLoader(), IFACES, this);
   }
 
@@ -228,20 +262,25 @@ class PooledConnection implements InvocationHandler {
    * @param method - the method to be executed
    * @param args   - the parameters to be passed to the method
    * @see java.lang.reflect.InvocationHandler#invoke(Object, java.lang.reflect.Method, Object[])
+   *
+   * 代理调用方法
    */
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     String methodName = method.getName();
+    // <1> 判断是否为CLOSE方法，若是则将连接放回连接池中，避免连接被关闭
     if (CLOSE.hashCode() == methodName.hashCode() && CLOSE.equals(methodName)) {
       dataSource.pushConnection(this);
       return null;
     }
     try {
+      // <2.1> 判断非Object的方法，则先检查连接是否可用
       if (!Object.class.equals(method.getDeclaringClass())) {
         // issue #579 toString() should never fail
         // throw an SQLException instead of a Runtime
         checkConnection();
       }
+      // <2.2> 反射调用对应的方法
       return method.invoke(realConnection, args);
     } catch (Throwable t) {
       throw ExceptionUtil.unwrapThrowable(t);
