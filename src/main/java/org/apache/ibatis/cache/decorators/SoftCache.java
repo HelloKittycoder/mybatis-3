@@ -15,13 +15,13 @@
  */
 package org.apache.ibatis.cache.decorators;
 
+import org.apache.ibatis.cache.Cache;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
-
-import org.apache.ibatis.cache.Cache;
 
 /**
  * Soft Reference cache decorator
@@ -30,9 +30,21 @@ import org.apache.ibatis.cache.Cache;
  * @author Clinton Begin
  */
 public class SoftCache implements Cache {
+  /**
+   * 强引用的键的队列
+   */
   private final Deque<Object> hardLinksToAvoidGarbageCollection;
+  /**
+   * 被GC回收的WeakEntry集合，避免被GC
+   */
   private final ReferenceQueue<Object> queueOfGarbageCollectedEntries;
+  /**
+   * 装饰的Cache对象
+   */
   private final Cache delegate;
+  /**
+   * {@link #hardLinksToAvoidGarbageCollection} 的大小
+   */
   private int numberOfHardLinks;
 
   public SoftCache(Cache delegate) {
@@ -60,6 +72,7 @@ public class SoftCache implements Cache {
 
   @Override
   public void putObject(Object key, Object value) {
+    // 移除已经被GC回收的SoftEntry
     removeGarbageCollectedItems();
     delegate.putObject(key, new SoftEntry(key, value, queueOfGarbageCollectedEntries));
   }
@@ -68,15 +81,20 @@ public class SoftCache implements Cache {
   public Object getObject(Object key) {
     Object result = null;
     @SuppressWarnings("unchecked") // assumed delegate cache is totally managed by this cache
+    // 获得值的WeakReference对象
     SoftReference<Object> softReference = (SoftReference<Object>) delegate.getObject(key);
     if (softReference != null) {
+      // 获得值
       result = softReference.get();
+      // 为空，从delegate中移除。为空的原因是，意味着已经被GC回收
       if (result == null) {
         delegate.removeObject(key);
+      // 非空，添加到hardLinksToAvoidGarbageCollection中，避免被GC
       } else {
         // See #586 (and #335) modifications need more than a read lock
         synchronized (hardLinksToAvoidGarbageCollection) {
           hardLinksToAvoidGarbageCollection.addFirst(result);
+          // 超过上限，移除hardLinksToAvoidGarbageCollection的队尾
           if (hardLinksToAvoidGarbageCollection.size() > numberOfHardLinks) {
             hardLinksToAvoidGarbageCollection.removeLast();
           }
@@ -88,16 +106,21 @@ public class SoftCache implements Cache {
 
   @Override
   public Object removeObject(Object key) {
+    // 移除已经被GC回收的SoftEntry
     removeGarbageCollectedItems();
+    // 移除出delegate
     return delegate.removeObject(key);
   }
 
   @Override
   public void clear() {
+    // 清空hardLinksToAvoidGarbageCollection
     synchronized (hardLinksToAvoidGarbageCollection) {
       hardLinksToAvoidGarbageCollection.clear();
     }
+    // 移除已经被GC回收的WeakEntry
     removeGarbageCollectedItems();
+    // 清空delegate
     delegate.clear();
   }
 

@@ -15,17 +15,27 @@
  */
 package org.apache.ibatis.cache.decorators;
 
-import java.util.concurrent.locks.ReadWriteLock;
-
 import org.apache.ibatis.cache.Cache;
+
+import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  * @author Clinton Begin
+ * 定时清空整个容器的Cache实现类
  */
 public class ScheduledCache implements Cache {
 
+  /**
+   * 被装饰的Cache对象
+   */
   private final Cache delegate;
+  /**
+   * 清空间隔，单位：毫秒
+   */
   protected long clearInterval;
+  /**
+   * 最后清空时间，单位：毫秒
+   */
   protected long lastClear;
 
   public ScheduledCache(Cache delegate) {
@@ -45,30 +55,36 @@ public class ScheduledCache implements Cache {
 
   @Override
   public int getSize() {
+    // 判断是否要全部清空
     clearWhenStale();
     return delegate.getSize();
   }
 
   @Override
   public void putObject(Object key, Object object) {
+    // 判断是否要全部清空
     clearWhenStale();
     delegate.putObject(key, object);
   }
 
   @Override
   public Object getObject(Object key) {
+    // 判断是否要全部清空
     return clearWhenStale() ? null : delegate.getObject(key);
   }
 
   @Override
   public Object removeObject(Object key) {
+    // 判断是否要全部清空
     clearWhenStale();
     return delegate.removeObject(key);
   }
 
   @Override
   public void clear() {
+    // 记录清空时间
     lastClear = System.currentTimeMillis();
+    // 全部清空
     delegate.clear();
   }
 
@@ -87,8 +103,14 @@ public class ScheduledCache implements Cache {
     return delegate.equals(obj);
   }
 
+  /**
+   * 判断是否要全部清空
+   * @return 是否全部清空
+   */
   private boolean clearWhenStale() {
+    // 判断是否要全部清空
     if (System.currentTimeMillis() - lastClear > clearInterval) {
+      // 清空
       clear();
       return true;
     }
