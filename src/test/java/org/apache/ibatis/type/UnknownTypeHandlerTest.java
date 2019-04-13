@@ -29,6 +29,15 @@ class UnknownTypeHandlerTest extends BaseTypeHandlerTest {
 
   private static final TypeHandler<Object> TYPE_HANDLER = spy(new UnknownTypeHandler(new TypeHandlerRegistry()));
 
+  // 验证下单例
+  @Test
+  public void testSingleInstance() throws Exception {
+    TypeHandler<Object> handler1 = new UnknownTypeHandler(new TypeHandlerRegistry());
+    TypeHandler<Object> handler2 = new UnknownTypeHandler(new TypeHandlerRegistry());
+    System.out.println(handler1);
+    System.out.println(handler2);
+  }
+
   @Override
   @Test
   public void shouldSetParameter() throws Exception {

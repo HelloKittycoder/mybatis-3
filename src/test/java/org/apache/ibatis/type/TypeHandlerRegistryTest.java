@@ -15,7 +15,11 @@
  */
 package org.apache.ibatis.type;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.apache.ibatis.domain.misc.RichType;
+import org.apache.ibatis.type.testTypeHandler.ComputerTypeHandler;
+import org.apache.ibatis.type.testTypeHandler.StudentTypeHandler;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.sql.CallableStatement;
@@ -25,9 +29,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.ibatis.domain.misc.RichType;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TypeHandlerRegistryTest {
 
@@ -214,5 +216,17 @@ class TypeHandlerRegistryTest {
     assertFalse(typeHandlerRegistry.hasTypeHandler(Address.class));
     typeHandlerRegistry.register(Address.class, StringTypeHandler.class);
     assertTrue(typeHandlerRegistry.hasTypeHandler(Address.class));
+  }
+
+  // 测试扫描包下的类（这里测试失败，后续抽空找下原因）
+  @Test
+  void shouldRegisterPackage() {
+    assertFalse(typeHandlerRegistry.hasTypeHandler(StudentTypeHandler.class));
+    assertFalse(typeHandlerRegistry.hasTypeHandler(ComputerTypeHandler.class));
+
+    typeHandlerRegistry.register("org.apache.ibatis.type.testTypeHandler");
+
+    assertTrue(typeHandlerRegistry.hasTypeHandler(StudentTypeHandler.class));
+    assertTrue(typeHandlerRegistry.hasTypeHandler(ComputerTypeHandler.class));
   }
 }

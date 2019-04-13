@@ -23,10 +23,16 @@ import java.lang.annotation.Target;
 
 /**
  * @author Eduardo Macarron
+ *
+ * 匹配Java Type类型的注解
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.TYPE) // 注册到类
 public @interface MappedTypes {
+
+  /**
+   * @return 匹配的Java Type类型的数组
+   */
   Class<?>[] value();
 }

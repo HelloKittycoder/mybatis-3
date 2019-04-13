@@ -34,11 +34,21 @@ import org.apache.ibatis.io.Resources;
 
 /**
  * @author Clinton Begin
+ *
+ * 类型与别名的注册表
+ * （通过别名，我们在Mapper XML中的resultType和parameterType属性，直接使用，而不用写全类名）
  */
 public class TypeAliasRegistry {
 
+  /**
+   * 类型与别名的映射
+   */
   private final Map<String, Class<?>> typeAliases = new HashMap<>();
 
+  /**
+   * 初始化默认的类型与别名
+   * 另外，在 {@link org.apache.ibatis.session.Configuration} 构造方法中，也有默认的注册
+   */
   public TypeAliasRegistry() {
     registerAlias("string", String.class);
 
@@ -102,65 +112,89 @@ public class TypeAliasRegistry {
 
   @SuppressWarnings("unchecked")
   // throws class cast exception as well if types cannot be assigned
+  // 获得别名对应的类型
   public <T> Class<T> resolveAlias(String string) {
     try {
       if (string == null) {
         return null;
       }
       // issue #748
+      // <1> 转换成小写
       String key = string.toLowerCase(Locale.ENGLISH);
       Class<T> value;
+      // <2.1> 首先，从typeAliases中获取
       if (typeAliases.containsKey(key)) {
         value = (Class<T>) typeAliases.get(key);
+      // <2.2> 其次，直接获得对应类
       } else {
         value = (Class<T>) Resources.classForName(string);
       }
       return value;
-    } catch (ClassNotFoundException e) {
+    } catch (ClassNotFoundException e) { // <2.3> 异常
       throw new TypeException("Could not resolve type alias '" + string + "'.  Cause: " + e, e);
     }
   }
 
+  /**
+   * 注册指定包下的别名与类的映射
+   * @param packageName 指定包
+   */
   public void registerAliases(String packageName) {
     registerAliases(packageName, Object.class);
   }
 
+  /**
+   * 注册指定包下的别名与类的映射。另外，要求类必须是 {@param superType} 类型（包括子类）
+   * @param packageName 指定包
+   * @param superType 指定父类
+   */
   public void registerAliases(String packageName, Class<?> superType) {
+    // 获得指定包下的所有类
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
     Set<Class<? extends Class<?>>> typeSet = resolverUtil.getClasses();
+    // 遍历，逐个注册类型与别名的注册表
     for (Class<?> type : typeSet) {
       // Ignore inner classes and interfaces (including package-info.java)
       // Skip also inner classes. See issue #6
+      // 排除匿名类、接口、内部类
       if (!type.isAnonymousClass() && !type.isInterface() && !type.isMemberClass()) {
         registerAlias(type);
       }
     }
   }
 
+  // 注册指定类
   public void registerAlias(Class<?> type) {
+    // <1> 默认为，简单类名
     String alias = type.getSimpleName();
+    // <2> 如果有注解，使用注解上的名字
     Alias aliasAnnotation = type.getAnnotation(Alias.class);
     if (aliasAnnotation != null) {
       alias = aliasAnnotation.value();
     }
+    // <3> 注册类型与别名的注册表
     registerAlias(alias, type);
   }
 
+  // 注册类型与别名的注册表
   public void registerAlias(String alias, Class<?> value) {
     if (alias == null) {
       throw new TypeException("The parameter alias cannot be null");
     }
     // issue #748
+    // <1> 转换成小写
     String key = alias.toLowerCase(Locale.ENGLISH);
     if (typeAliases.containsKey(key) && typeAliases.get(key) != null && !typeAliases.get(key).equals(value)) {
       throw new TypeException("The alias '" + alias + "' is already mapped to the value '" + typeAliases.get(key).getName() + "'.");
     }
+    // <3>
     typeAliases.put(key, value);
   }
 
   public void registerAlias(String alias, String value) {
     try {
+      // 通过类名的字符串，获得对应的类
       registerAlias(alias, Resources.classForName(value));
     } catch (ClassNotFoundException e) {
       throw new TypeException("Error registering type alias " + alias + " for " + value + ". Cause: " + e, e);
