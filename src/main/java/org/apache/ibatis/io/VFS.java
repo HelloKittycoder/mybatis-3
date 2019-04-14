@@ -31,17 +31,23 @@ import org.apache.ibatis.logging.LogFactory;
  * Provides a very simple API for accessing resources within an application server.
  *
  * @author Ben Gunter
+ *
+ * 虚拟文件系统（Virtual File System）抽象类，用来查找指定路径下的文件
  */
 public abstract class VFS {
   private static final Log log = LogFactory.getLog(VFS.class);
 
   /** The built-in implementations. */
+  // 内置的VFS实现类的数组
   public static final Class<?>[] IMPLEMENTATIONS = { JBoss6VFS.class, DefaultVFS.class };
 
   /** The list to which implementations are added by {@link #addImplClass(Class)}. */
+  // 自定义的VFS实现类的数组
   public static final List<Class<? extends VFS>> USER_IMPLEMENTATIONS = new ArrayList<>();
 
   /** Singleton instance holder. */
+  // 这里采用的是“懒汉式，线程安全”
+  // 单例模式的7种写法：https://cantellow.iteye.com/blog/838473
   private static class VFSHolder {
     static final VFS INSTANCE = createVFS();
 
@@ -53,6 +59,7 @@ public abstract class VFS {
       impls.addAll(Arrays.asList((Class<? extends VFS>[]) IMPLEMENTATIONS));
 
       // Try each implementation class until a valid one is found
+      // 创建VFS对象，选择最后一个符合的
       VFS vfs = null;
       for (int i = 0; vfs == null || !vfs.isValid(); i++) {
         Class<? extends VFS> impl = impls.get(i);
@@ -81,6 +88,8 @@ public abstract class VFS {
   /**
    * Get the singleton {@link VFS} instance. If no {@link VFS} implementation can be found for the
    * current environment, then this method returns null.
+   *
+   * 获得VFS单例
    */
   public static VFS getInstance() {
     return VFSHolder.INSTANCE;
@@ -166,6 +175,8 @@ public abstract class VFS {
    * @param path The resource path.
    * @return A list of {@link URL}s, as returned by {@link ClassLoader#getResources(String)}.
    * @throws IOException If I/O errors occur
+   *
+   * 获取指定路径下的URL数组
    */
   protected static List<URL> getResources(String path) throws IOException {
     return Collections.list(Thread.currentThread().getContextClassLoader().getResources(path));
@@ -183,6 +194,8 @@ public abstract class VFS {
    *            value passed to {@link #getResources(String)} to get the resource URL.
    * @return A list containing the names of the child resources.
    * @throws IOException If I/O errors occur
+   *
+   * 递归列出所有的资源
    */
   protected abstract List<String> list(URL url, String forPath) throws IOException;
 
@@ -193,6 +206,8 @@ public abstract class VFS {
    * @param path The path of the resource(s) to list.
    * @return A list containing the names of the child resources.
    * @throws IOException If I/O errors occur
+   *
+   * 获取指定路径下的所有资源
    */
   public List<String> list(String path) throws IOException {
     List<String> names = new ArrayList<>();
