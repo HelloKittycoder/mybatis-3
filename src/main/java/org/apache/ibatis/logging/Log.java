@@ -17,6 +17,8 @@ package org.apache.ibatis.logging;
 
 /**
  * @author Clinton Begin
+ *
+ * mybatis的Log接口
  */
 public interface Log {
 

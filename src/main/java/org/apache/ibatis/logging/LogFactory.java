@@ -28,21 +28,35 @@ public final class LogFactory {
    */
   public static final String MARKER = "MYBATIS";
 
+  /**
+   * 使用的Log构造方法
+   */
   private static Constructor<? extends Log> logConstructor;
 
   static {
+    // <1> 逐个尝试，判断使用哪个Log的实现类，即初始化logConstructor属性
     tryImplementation(LogFactory::useSlf4jLogging);
     tryImplementation(LogFactory::useCommonsLogging);
     tryImplementation(LogFactory::useLog4J2Logging);
     tryImplementation(LogFactory::useLog4JLogging);
     tryImplementation(LogFactory::useJdkLogging);
     tryImplementation(LogFactory::useNoLogging);
+
+    // tryImplementation(LogFactory::useSlf4jLogging);
+    // 写法相当于
+    /*tryImplementation(new Runnable() {
+      @Override
+      public void run() {
+        LogFactory.useSlf4jLogging();
+      }
+    });*/
   }
 
   private LogFactory() {
     // disable construction
   }
 
+  // 获得Log对象
   public static Log getLog(Class<?> aClass) {
     return getLog(aClass.getName());
   }
@@ -87,6 +101,7 @@ public final class LogFactory {
     setImplementation(org.apache.ibatis.logging.nologging.NoLoggingImpl.class);
   }
 
+  // 判断使用哪个Log的实现类
   private static void tryImplementation(Runnable runnable) {
     if (logConstructor == null) {
       try {
@@ -97,13 +112,18 @@ public final class LogFactory {
     }
   }
 
+  // 尝试使用指定的Log实现类
   private static void setImplementation(Class<? extends Log> implClass) {
     try {
+      // 获得参数为String的构造方法
       Constructor<? extends Log> candidate = implClass.getConstructor(String.class);
+      // 创建Log对象
       Log log = candidate.newInstance(LogFactory.class.getName());
       if (log.isDebugEnabled()) {
         log.debug("Logging initialized using '" + implClass + "' adapter.");
       }
+      // 创建成功，意味着可以使用，赋值给logConstructor
+      // 这样其他类就不会执行到该方法了
       logConstructor = candidate;
     } catch (Throwable t) {
       throw new LogException("Error setting Log implementation.  Cause: " + t, t);
