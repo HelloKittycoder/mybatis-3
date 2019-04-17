@@ -2,7 +2,6 @@ package org.apache.ibatis.binding.functionalexpr;
 
 import org.apache.ibatis.binding.functionalexpr.po.Person;
 import org.assertj.core.util.Lists;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +13,7 @@ import java.util.stream.Stream;
 
 /**
  * Created by shucheng on 2019-4-17 下午 14:03
- * Stream测试
+ * Stream测试test
  */
 public class StreamTest {
 
