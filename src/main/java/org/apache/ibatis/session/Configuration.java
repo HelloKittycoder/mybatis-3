@@ -99,6 +99,9 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class Configuration {
 
+  /**
+   * DB Environment对象
+   */
   protected Environment environment;
 
   protected boolean safeRowBoundsEnabled;
@@ -115,6 +118,9 @@ public class Configuration {
 
   protected String logPrefix;
   protected Class<? extends Log> logImpl;
+  /**
+   * VFS实现类
+   */
   protected Class<? extends VFS> vfsImpl;
   protected LocalCacheScope localCacheScope = LocalCacheScope.SESSION;
   protected JdbcType jdbcTypeForNull = JdbcType.OTHER;
@@ -126,13 +132,25 @@ public class Configuration {
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
   protected Properties variables = new Properties();
+  /**
+   * ReflectorFactory对象
+   */
   protected ReflectorFactory reflectorFactory = new DefaultReflectorFactory();
+  /**
+   * ObjectFactory对象
+   */
   protected ObjectFactory objectFactory = new DefaultObjectFactory();
+  /**
+   * ObjectWrapperFactory对象
+   */
   protected ObjectWrapperFactory objectWrapperFactory = new DefaultObjectWrapperFactory();
 
   protected boolean lazyLoadingEnabled = false;
   protected ProxyFactory proxyFactory = new JavassistProxyFactory(); // #224 Using internal Javassist instead of OGNL
 
+    /**
+     * 数据库标识
+     */
   protected String databaseId;
   /**
    * Configuration factory class.
@@ -142,7 +160,13 @@ public class Configuration {
    */
   protected Class<?> configurationFactory;
 
+  /**
+   * MapperRegistry对象
+   */
   protected final MapperRegistry mapperRegistry = new MapperRegistry(this);
+  /**
+   * 拦截器链
+   */
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry();
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
@@ -224,7 +248,9 @@ public class Configuration {
 
   public void setLogImpl(Class<? extends Log> logImpl) {
     if (logImpl != null) {
+      // 设置logImpl属性
       this.logImpl = logImpl;
+      // 在LogFactory中设置使用的自定义的logImpl
       LogFactory.useCustomLogging(this.logImpl);
     }
   }
@@ -235,7 +261,9 @@ public class Configuration {
 
   public void setVfsImpl(Class<? extends VFS> vfsImpl) {
     if (vfsImpl != null) {
+      // 设置vfsImpl属性
       this.vfsImpl = vfsImpl;
+      // 添加到VFS中的自定义VFS类的集合
       VFS.addImplClass(this.vfsImpl);
     }
   }
@@ -748,6 +776,7 @@ public class Configuration {
   }
 
   public void addMappers(String packageName, Class<?> superType) {
+    // 扫描该包下所有的Mapper接口，并添加到mapperRegistry中
     mapperRegistry.addMappers(packageName, superType);
   }
 
