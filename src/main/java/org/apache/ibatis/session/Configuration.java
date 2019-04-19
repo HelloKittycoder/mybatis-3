@@ -175,23 +175,45 @@ public class Configuration {
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
+  /**
+   * Cache对象集合
+   * KEY：命名空间namespace
+   */
   protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
+  /**
+   * ResultMap的映射
+   * KEY：`${namespace}.${id}`
+   */
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
+  /**
+   * 已加载资源（Resource）集合
+   */
   protected final Set<String> loadedResources = new HashSet<>();
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
+  /**
+   * XMLStatementBuilder集合
+   */
   protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
   protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
+  /**
+   * ResultMapResolver集合
+   */
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 
-  /*
+  /**
    * A map holds cache-ref relationship. The key is the namespace that
    * references a cache bound to another namespace and the value is the
    * namespace which the actual cache is bound to.
+   *
+   * Cache指向的映射
+   *
+   * @see #addCacheRef(String, String)
+   * @see org.apache.ibatis.builder.xml.XMLMapperBuilder#cacheRefElement(XNode)
    */
   protected final Map<String, String> cacheRefMap = new HashMap<>();
 
@@ -669,8 +691,11 @@ public class Configuration {
   }
 
   public void addResultMap(ResultMap rm) {
+    // <1> 添加到resultMaps中
     resultMaps.put(rm.getId(), rm);
+    // 遍历全局的ResultMap集合，若其拥有Discriminator对象，则判断是否强制标记为有内嵌的ResultMap
     checkLocallyForDiscriminatedNestedResultMaps(rm);
+    // 若传入的ResultMap不存在内嵌的ResultMap并且有Discriminator，则判断是否需要强制标识为有内嵌的ResultMap
     checkGloballyForDiscriminatedNestedResultMaps(rm);
   }
 
@@ -899,10 +924,13 @@ public class Configuration {
 
   // Slow but a one time cost. A better solution is welcome.
   protected void checkLocallyForDiscriminatedNestedResultMaps(ResultMap rm) {
+    // 如果传入的ResultMap不存在内嵌ResultMap并且有Discriminator
     if (!rm.hasNestedResultMaps() && rm.getDiscriminator() != null) {
+      // 遍历传入的ResultMap的Discriminator的ResultMap集合
       for (Map.Entry<String, String> entry : rm.getDiscriminator().getDiscriminatorMap().entrySet()) {
         String discriminatedResultMapName = entry.getValue();
         if (hasResultMap(discriminatedResultMapName)) {
+          // 如果引用的ResultMap存在内嵌ResultMap，则标记传入的ResultMap存在内嵌ResultMap
           ResultMap discriminatedResultMap = resultMaps.get(discriminatedResultMapName);
           if (discriminatedResultMap.hasNestedResultMaps()) {
             rm.forceNestedResultMaps();
