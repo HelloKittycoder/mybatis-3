@@ -278,6 +278,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return new Discriminator.Builder(configuration, resultMapping, namespaceDiscriminatorMap).build();
   }
 
+  // 构建MappedStatement
   public MappedStatement addMappedStatement(
       String id,
       SqlSource sqlSource,
@@ -300,13 +301,16 @@ public class MapperBuilderAssistant extends BaseBuilder {
       LanguageDriver lang,
       String resultSets) {
 
+    // <1> 如果指向的Cache未解析，抛出IncompleteElementException异常
     if (unresolvedCacheRef) {
       throw new IncompleteElementException("Cache-ref not yet resolved");
     }
 
+    // <2> 获得id编号，格式未`${namespace}.${id}`
     id = applyCurrentNamespace(id, false);
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
 
+    // <3> 创建MappedStatement.Builder对象
     MappedStatement.Builder statementBuilder = new MappedStatement.Builder(configuration, id, sqlSource, sqlCommandType)
         .resource(resource)
         .fetchSize(fetchSize)
@@ -319,18 +323,21 @@ public class MapperBuilderAssistant extends BaseBuilder {
         .lang(lang)
         .resultOrdered(resultOrdered)
         .resultSets(resultSets)
-        .resultMaps(getStatementResultMaps(resultMap, resultType, id))
+        .resultMaps(getStatementResultMaps(resultMap, resultType, id)) // <3.1> 获得ResultMap集合
         .resultSetType(resultSetType)
         .flushCacheRequired(valueOrDefault(flushCache, !isSelect))
         .useCache(valueOrDefault(useCache, isSelect))
         .cache(currentCache);
 
+    // <3.2> 获得ParameterMap，并设置到MappedStatement.Builder中
     ParameterMap statementParameterMap = getStatementParameterMap(parameterMap, parameterType, id);
     if (statementParameterMap != null) {
       statementBuilder.parameterMap(statementParameterMap);
     }
 
+    // <4> 创建MappedStatement对象
     MappedStatement statement = statementBuilder.build();
+    // <5> 添加到configuration中
     configuration.addMappedStatement(statement);
     return statement;
   }
@@ -339,18 +346,22 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return value == null ? defaultValue : value;
   }
 
+  // 获得ParameterMap对象（说明：mybatis官方不建议使用parameterMap的方式）
   private ParameterMap getStatementParameterMap(
       String parameterMapName,
       Class<?> parameterTypeClass,
       String statementId) {
+    // 获得ParameterMap的编号，格式为`${namespace}.${parameterMapName}`
     parameterMapName = applyCurrentNamespace(parameterMapName, true);
     ParameterMap parameterMap = null;
+    // <2> 如果parameterMapName非空，则获得parameterMapName对应的ParameterMap对象
     if (parameterMapName != null) {
       try {
         parameterMap = configuration.getParameterMap(parameterMapName);
       } catch (IllegalArgumentException e) {
         throw new IncompleteElementException("Could not find parameter map " + parameterMapName, e);
       }
+    // <1> 如果parameterTypeClass非空，则创建parameterTypeClass对象
     } else if (parameterTypeClass != null) {
       List<ParameterMapping> parameterMappings = new ArrayList<>();
       parameterMap = new ParameterMap.Builder(
@@ -362,15 +373,21 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return parameterMap;
   }
 
+  // 获得ResultMap集合
   private List<ResultMap> getStatementResultMaps(
       String resultMap,
       Class<?> resultType,
       String statementId) {
+    // 获得resultMap的编号
     resultMap = applyCurrentNamespace(resultMap, true);
 
+    // 创建ResultMap集合
     List<ResultMap> resultMaps = new ArrayList<>();
+    // 如果resultMap非空，则获得resultMap对应的ResultMap对象
     if (resultMap != null) {
       String[] resultMapNames = resultMap.split(",");
+      // 方法参数resultMap存在使用逗号分隔的情况。这个出现在使用存储过程的时候，
+      // 参见https://blog.csdn.net/sinat_25295611/article/details/75103358
       for (String resultMapName : resultMapNames) {
         try {
           resultMaps.add(configuration.getResultMap(resultMapName.trim()));
@@ -378,6 +395,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
           throw new IncompleteElementException("Could not find result map " + resultMapName, e);
         }
       }
+    // 如果resultType非空，则创建ResultMap对象
     } else if (resultType != null) {
       ResultMap inlineResultMap = new ResultMap.Builder(
           configuration,

@@ -172,6 +172,10 @@ public class Configuration {
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
   protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
 
+  /**
+   * MappedStatement映射
+   * KEY：`${namespace}.${id}`
+   */
   protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
       .conflictMessageProducer((savedValue, targetValue) ->
           ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
@@ -186,6 +190,11 @@ public class Configuration {
    */
   protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
   protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
+  /**
+   * KeyGenerator的映射
+   * KEY：在 ${@link #mappedStatements} 的KEY的基础上，跟上
+   *    ${@link org.apache.ibatis.executor.keygen.SelectKeyGenerator#SELECT_KEY_SUFFIX}
+   */
   protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
 
   /**

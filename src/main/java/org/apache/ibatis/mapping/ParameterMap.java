@@ -22,11 +22,28 @@ import org.apache.ibatis.session.Configuration;
 
 /**
  * @author Clinton Begin
+ *
+ * 参数集合
  */
 public class ParameterMap {
 
+  /**
+   * 编号
+   *
+   * 适用于parameterMap标签的id属性
+   */
   private String id;
+  /**
+   * 类型
+   *
+   * 适用于parameterMap标签的type属性
+   */
   private Class<?> type;
+  /**
+   * ParameterMapping集合
+   *
+   * 适用于parameterMap标签下所有parameter标签中属性构成的集合
+   */
   private List<ParameterMapping> parameterMappings;
 
   private ParameterMap() {

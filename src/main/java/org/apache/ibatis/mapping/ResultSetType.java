@@ -19,10 +19,15 @@ import java.sql.ResultSet;
 
 /**
  * @author Clinton Begin
+ *
+ * {@link ResultSet} 的枚举值
+ * 可参看 http://jinguo.iteye.com/blog/365373
  */
 public enum ResultSetType {
   /**
    * behavior with same as unset (driver dependent).
+   *
+   * 默认，即未设置
    *
    * @since 3.5.0
    */
