@@ -306,7 +306,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       throw new IncompleteElementException("Cache-ref not yet resolved");
     }
 
-    // <2> 获得id编号，格式未`${namespace}.${id}`
+    // <2> 获得id编号，格式为`${namespace}.${id}`
     id = applyCurrentNamespace(id, false);
     boolean isSelect = sqlCommandType == SqlCommandType.SELECT;
 

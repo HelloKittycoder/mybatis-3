@@ -212,6 +212,9 @@ public class Configuration {
    * ResultMapResolver集合
    */
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
+  /**
+   * 未完成的MethodResolver集合
+   */
   protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
 
   /**
@@ -599,9 +602,12 @@ public class Configuration {
    * @since 3.5.1
    */
   public LanguageDriver getLanguageDriver(Class<? extends LanguageDriver> langClass) {
+    // 获得langClass类
+    // 如果为空，则使用默认类
     if (langClass == null) {
       return languageRegistry.getDefaultDriver();
     }
+    // 如果不为空，则先注册对应的类，然后再获取
     languageRegistry.register(langClass);
     return languageRegistry.getDriver(langClass);
   }
