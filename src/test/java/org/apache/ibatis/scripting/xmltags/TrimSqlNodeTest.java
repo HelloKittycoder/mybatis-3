@@ -1,5 +1,5 @@
 /**
- *    Copyright 2009-2015 the original author or authors.
+ *    Copyright 2009-2019 the original author or authors.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,33 +15,21 @@
  */
 package org.apache.ibatis.scripting.xmltags;
 
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
+import java.util.List;
+
 /**
- * <bind/>标签的SqlNode实现类
- * @author Frank D. Martinez [mnesarco]
+ * Created by shucheng on 2019-4-28 下午 13:29
  */
-public class VarDeclSqlNode implements SqlNode {
+public class TrimSqlNodeTest {
 
-  /**
-   * 名字
-   */
-  private final String name;
-  /**
-   * 表达式
-   */
-  private final String expression;
-
-  public VarDeclSqlNode(String var, String exp) {
-    name = var;
-    expression = exp;
-  }
-
-  @Override
-  public boolean apply(DynamicContext context) {
-    // <1> 获得值
-    final Object value = OgnlCache.getValue(expression, context.getBindings());
-    // <2> 绑定到上下文
-    context.bind(name, value);
-    return true;
-  }
-
+    @Test
+    public void testParseOverrides() throws Exception {
+        Method method = TrimSqlNode.class.getDeclaredMethod("parseOverrides", String.class);
+        method.setAccessible(true); // 将私有方法设置为可访问的
+        List<String> list = (List<String>) method.invoke(null, "aa|bb");
+        System.out.println(list);
+    }
 }

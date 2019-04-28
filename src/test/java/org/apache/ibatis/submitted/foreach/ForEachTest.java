@@ -16,10 +16,7 @@
 package org.apache.ibatis.submitted.foreach;
 
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.apache.ibatis.BaseDataTest;
 import org.apache.ibatis.exceptions.PersistenceException;
@@ -63,6 +60,19 @@ class ForEachTest {
       testProfile.setFriendList(friendList);
       User user = mapper.getUser(testProfile);
       Assertions.assertEquals("User6", user.getName());
+    }
+  }
+
+  @Test
+  void shouldGetUsers() {
+    try (SqlSession sqlSession = sqlSessionFactory.openSession()) {
+      // 10个Java开发人员最常犯的错误
+      // 参考链接：https://mp.weixin.qq.com/s/K_kLRt4hs5xm_v5Ty1EZVQ
+      // 构建要传的list参数
+      List<String> userIds = new ArrayList<>(Arrays.asList(new String[]{"1", "2", "3"}));
+      Mapper mapper = sqlSession.getMapper(Mapper.class);
+      List<User> userList = mapper.getUsers(userIds);
+      System.out.println(userList);
     }
   }
 

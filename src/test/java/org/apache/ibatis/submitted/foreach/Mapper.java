@@ -23,6 +23,13 @@ public interface Mapper {
 
   User getUser(User user);
 
+  /**
+   * 获取多个User
+   * @param userIds
+   * @return
+   */
+  List<User> getUsers(List<String> userIds);
+
   int countByUserList(List<User> users);
 
   int countByBestFriend(List<User> users);

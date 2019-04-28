@@ -26,6 +26,8 @@ import org.apache.ibatis.session.Configuration;
  * and create a {@link RawSqlSource}. So there is no need to use RAW unless you
  * want to make sure that there is not any dynamic tag for any reason.
  *
+ * 语言驱动实现类
+ *
  * @since 3.2.0
  * @author Eduardo Macarron
  */
@@ -33,18 +35,26 @@ public class RawLanguageDriver extends XMLLanguageDriver {
 
   @Override
   public SqlSource createSqlSource(Configuration configuration, XNode script, Class<?> parameterType) {
+    // 调用父类，创建SqlSource对象
     SqlSource source = super.createSqlSource(configuration, script, parameterType);
+    // 校验创建的是RawSqlSource对象
     checkIsNotDynamic(source);
     return source;
   }
 
   @Override
   public SqlSource createSqlSource(Configuration configuration, String script, Class<?> parameterType) {
+    // 调用父类，创建SqlSource对象
     SqlSource source = super.createSqlSource(configuration, script, parameterType);
+    // 校验创建的是RawSqlSource对象
     checkIsNotDynamic(source);
     return source;
   }
 
+  /**
+   * 校验是RawSqlSource对象
+   * @param source 创建的SqlSource对象
+   */
   private void checkIsNotDynamic(SqlSource source) {
     if (!RawSqlSource.class.equals(source.getClass())) {
       throw new BuilderException("Dynamic content is not allowed when using RAW language");

@@ -24,29 +24,49 @@ import java.util.Map;
 import org.apache.ibatis.builder.BuilderException;
 
 /**
+ * OGNL表达式计算器
  * @author Clinton Begin
  */
 public class ExpressionEvaluator {
 
+  /**
+   * 判断表达式对应的值，是否为true
+   * @param expression 表达式
+   * @param parameterObject 参数对象
+   * @return 是否为true
+   */
   public boolean evaluateBoolean(String expression, Object parameterObject) {
+    // 获得表达式对应的值
     Object value = OgnlCache.getValue(expression, parameterObject);
+    // 如果是Boolean类型，直接判断
     if (value instanceof Boolean) {
       return (Boolean) value;
     }
+    // 如果是Number类型，则判断不等于0
     if (value instanceof Number) {
       return new BigDecimal(String.valueOf(value)).compareTo(BigDecimal.ZERO) != 0;
     }
+    // 如果是其他类型，判断非空
     return value != null;
   }
 
+  /**
+   * 获得表达式对应的集合
+   * @param expression 表达式
+   * @param parameterObject 参数对象
+   * @return 迭代器对象
+   */
   public Iterable<?> evaluateIterable(String expression, Object parameterObject) {
+    // 获得表达式对应的值
     Object value = OgnlCache.getValue(expression, parameterObject);
     if (value == null) {
       throw new BuilderException("The expression '" + expression + "' evaluated to a null value.");
     }
+    // 如果是Iterable类型，直接返回
     if (value instanceof Iterable) {
       return (Iterable<?>) value;
     }
+    // 如果是数组类型，则返回数组
     if (value.getClass().isArray()) {
       // the array may be primitive, so Arrays.asList() may throw
       // a ClassCastException (issue 209).  Do the work manually
@@ -59,6 +79,7 @@ public class ExpressionEvaluator {
       }
       return answer;
     }
+    // 如果是Map类型，则返回会Map.entrySet集合
     if (value instanceof Map) {
       return ((Map) value).entrySet();
     }

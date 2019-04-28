@@ -21,18 +21,28 @@ import org.apache.ibatis.parsing.GenericTokenParser;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * <foreach/>标签的SqlNode实现类
  * @author Clinton Begin
  */
 public class ForEachSqlNode implements SqlNode {
   public static final String ITEM_PREFIX = "__frch_";
 
   private final ExpressionEvaluator evaluator;
+  /**
+   * 集合的表达式
+   */
   private final String collectionExpression;
   private final SqlNode contents;
   private final String open;
   private final String close;
   private final String separator;
+  /**
+   * 集合项
+   */
   private final String item;
+  /**
+   * 索引变量
+   */
   private final String index;
   private final Configuration configuration;
 
@@ -48,25 +58,32 @@ public class ForEachSqlNode implements SqlNode {
     this.configuration = configuration;
   }
 
+  // 测试方法见 org.apache.ibatis.submitted.foreach.ForEachTest#shouldGetUsers
   @Override
   public boolean apply(DynamicContext context) {
     Map<String, Object> bindings = context.getBindings();
+    // <1> 获得遍历的集合Iterable对象，用于遍历
     final Iterable<?> iterable = evaluator.evaluateIterable(collectionExpression, bindings);
     if (!iterable.iterator().hasNext()) {
       return true;
     }
     boolean first = true;
+    // <2> 添加open到SQL中
     applyOpen(context);
     int i = 0;
     for (Object o : iterable) {
+      // <3> 记录原始的context对象
       DynamicContext oldContext = context;
+      // <4> 生成新的context
       if (first || separator == null) {
         context = new PrefixedContext(context, "");
       } else {
         context = new PrefixedContext(context, separator);
       }
+      // <5> 获得唯一编号
       int uniqueNumber = context.getUniqueNumber();
       // Issue #709
+      // <6> 绑定到context中
       if (o instanceof Map.Entry) {
         @SuppressWarnings("unchecked")
         Map.Entry<Object, Object> mapEntry = (Map.Entry<Object, Object>) o;
@@ -76,14 +93,19 @@ public class ForEachSqlNode implements SqlNode {
         applyIndex(context, i, uniqueNumber);
         applyItem(context, o, uniqueNumber);
       }
+      // <7> 执行contents的应用
       contents.apply(new FilteredDynamicContext(configuration, context, index, item, uniqueNumber));
+      // <8> 判断prefix是否已经插入
       if (first) {
         first = !((PrefixedContext) context).isPrefixApplied();
       }
+      // <9> 恢复原始的context对象
       context = oldContext;
       i++;
     }
+    // <10> 添加close到SQL中
     applyClose(context);
+    // <11> 移除index和item对应的绑定
     context.getBindings().remove(item);
     context.getBindings().remove(index);
     return true;
@@ -103,6 +125,7 @@ public class ForEachSqlNode implements SqlNode {
     }
   }
 
+  // 添加open到SQL中
   private void applyOpen(DynamicContext context) {
     if (open != null) {
       context.appendSql(open);
@@ -119,10 +142,20 @@ public class ForEachSqlNode implements SqlNode {
     return ITEM_PREFIX + item + "_" + i;
   }
 
+  // 实现子节点访问<foreach/>标签中的变量替换
   private static class FilteredDynamicContext extends DynamicContext {
     private final DynamicContext delegate;
+    /**
+     * 唯一标识 {@link DynamicContext#getUniqueNumber()}
+     */
     private final int index;
+    /**
+     * 索引变量 {@link ForEachSqlNode#index}
+     */
     private final String itemIndex;
+    /**
+     * 集合项 {@link ForEachSqlNode#item}
+     */
     private final String item;
 
     public FilteredDynamicContext(Configuration configuration,DynamicContext delegate, String itemIndex, String item, int i) {
@@ -151,13 +184,18 @@ public class ForEachSqlNode implements SqlNode {
     @Override
     public void appendSql(String sql) {
       GenericTokenParser parser = new GenericTokenParser("#{", "}", content -> {
+        // 将对item的访问，替换成itemizeItem(item, index)
         String newContent = content.replaceFirst("^\\s*" + item + "(?![^.,:\\s])", itemizeItem(item, index));
+        // 将对itemIndex的访问，替换成itemizeItem(itemIndex, index)
         if (itemIndex != null && newContent.equals(content)) {
           newContent = content.replaceFirst("^\\s*" + itemIndex + "(?![^.,:\\s])", itemizeItem(itemIndex, index));
         }
+        // 返回
         return "#{" + newContent + "}";
       });
 
+      // 执行GenericTokenParser的解析
+      // 添加到delegate中
       delegate.appendSql(parser.parse(sql));
     }
 
@@ -168,10 +206,17 @@ public class ForEachSqlNode implements SqlNode {
 
   }
 
-
+  // 处理的是集合元素之间的分隔符
   private class PrefixedContext extends DynamicContext {
     private final DynamicContext delegate;
+    /**
+     * prefix属性，虽然命名上是prefix，
+     * 但对应的是ForEachSqlNode的separator属性
+     */
     private final String prefix;
+    /**
+     * 是否已经应用prefix
+     */
     private boolean prefixApplied;
 
     public PrefixedContext(DynamicContext delegate, String prefix) {
@@ -197,10 +242,13 @@ public class ForEachSqlNode implements SqlNode {
 
     @Override
     public void appendSql(String sql) {
+      // 如果未应用prefix，并且方法参数sql非空
+      // 则添加prefix到delegate中，并标记prefixApplied为true，表示已经应用
       if (!prefixApplied && sql != null && sql.trim().length() > 0) {
         delegate.appendSql(prefix);
         prefixApplied = true;
       }
+      // 添加sql到delegate中
       delegate.appendSql(sql);
     }
 

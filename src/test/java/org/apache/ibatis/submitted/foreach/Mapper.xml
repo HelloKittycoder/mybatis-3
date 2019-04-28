@@ -32,6 +32,15 @@
         )
 	</select>
 
+	<select id="getUsers" resultType="org.apache.ibatis.submitted.foreach.User">
+		select * from users
+		 WHERE id in
+        <foreach collection="list" index="idx" item="item"
+          open="(" close=")" separator=",">
+          #{item}
+        </foreach>
+	</select>
+
   <select id="countByUserList" resultType="_int" parameterType="list">
     select count(*) from users
       <where>

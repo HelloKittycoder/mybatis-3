@@ -27,28 +27,48 @@ import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 动态SQL，用于每次执行SQL操作时，记录动态SQL处理后的最终SQL字符串
  * @author Clinton Begin
  */
 public class DynamicContext {
 
+  /**
+   * {@link #bindings} _parameter的键，参数
+   */
   public static final String PARAMETER_OBJECT_KEY = "_parameter";
+  /**
+   * {@link #bindings} _databaseId的键，数据库编号
+   */
   public static final String DATABASE_ID_KEY = "_databaseId";
 
   static {
+    // <1.2> 设置OGNL的属性访问器
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
   }
 
+  /**
+   * 上下文的参数集合
+   */
   private final ContextMap bindings;
+  /**
+   * 生成后的SQL
+   */
   private final StringJoiner sqlBuilder = new StringJoiner(" ");
+  /**
+   * 唯一编号。在{@link ForEachSqlNode}使用
+   */
   private int uniqueNumber = 0;
 
+  // 当需要使用到OGNL表达式时，parameterObject非空
   public DynamicContext(Configuration configuration, Object parameterObject) {
+    // <1> 初始化bindings参数
     if (parameterObject != null && !(parameterObject instanceof Map)) {
-      MetaObject metaObject = configuration.newMetaObject(parameterObject);
+      MetaObject metaObject = configuration.newMetaObject(parameterObject); // <1.1>
       bindings = new ContextMap(metaObject);
     } else {
       bindings = new ContextMap(null);
     }
+    // <2> 添加bindings的默认值
     bindings.put(PARAMETER_OBJECT_KEY, parameterObject);
     bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());
   }
@@ -62,6 +82,7 @@ public class DynamicContext {
   }
 
   public void appendSql(String sql) {
+    // 该操作会先追加sql，然后追加分隔符" "
     sqlBuilder.add(sql);
   }
 
@@ -69,26 +90,34 @@ public class DynamicContext {
     return sqlBuilder.toString().trim();
   }
 
+  // 每次请求，获得新的序号
   public int getUniqueNumber() {
     return uniqueNumber++;
   }
 
+  // 上下文的参数集合
   static class ContextMap extends HashMap<String, Object> {
     private static final long serialVersionUID = 2977601501966151582L;
 
+    /**
+     * parameter对应的MetaObject对象
+     */
     private MetaObject parameterMetaObject;
 
     public ContextMap(MetaObject parameterMetaObject) {
       this.parameterMetaObject = parameterMetaObject;
     }
 
+    // ContextMap类在HashMap的基础上，增加对parameterMetaObject属性的访问支持
     @Override
     public Object get(Object key) {
+      // 如果有key对应的值，直接获得
       String strKey = (String) key;
       if (super.containsKey(strKey)) {
         return super.get(strKey);
       }
 
+      // 从parameterMetaObject中，获得key对应的属性
       if (parameterMetaObject != null) {
         // issue #61 do not modify the context when reading
         return parameterMetaObject.getValue(strKey);
@@ -98,17 +127,20 @@ public class DynamicContext {
     }
   }
 
+  // 上下文访问器
   static class ContextAccessor implements PropertyAccessor {
 
     @Override
     public Object getProperty(Map context, Object target, Object name) {
       Map map = (Map) target;
 
+      // 优先从ContextMap中，获得属性
       Object result = map.get(name);
       if (map.containsKey(name) || result != null) {
         return result;
       }
 
+      // <x> 如果没有，则从PARAMETER_OBJECT_KEY对应的Map中，获得属性
       Object parameterObject = map.get(PARAMETER_OBJECT_KEY);
       if (parameterObject instanceof Map) {
         return ((Map)parameterObject).get(name);

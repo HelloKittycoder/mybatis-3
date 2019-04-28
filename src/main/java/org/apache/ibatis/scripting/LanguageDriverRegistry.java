@@ -19,18 +19,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * LanguageDriver注册表
  * @author Frank D. Martinez [mnesarco]
  */
 public class LanguageDriverRegistry {
 
+  /**
+   * LanguageDriver映射
+   */
   private final Map<Class<? extends LanguageDriver>, LanguageDriver> LANGUAGE_DRIVER_MAP = new HashMap<>();
 
+  /**
+   * 默认的LanguageDriver类
+   */
   private Class<? extends LanguageDriver> defaultDriverClass;
 
   public void register(Class<? extends LanguageDriver> cls) {
     if (cls == null) {
       throw new IllegalArgumentException("null is not a valid Language Driver");
     }
+    // 创建cls对应的对象，并添加到LANGUAGE_DRIVER_MAP中
     LANGUAGE_DRIVER_MAP.computeIfAbsent(cls, k -> {
       try {
         return k.getDeclaredConstructor().newInstance();
@@ -38,12 +46,21 @@ public class LanguageDriverRegistry {
         throw new ScriptingException("Failed to load language driver for " + cls.getName(), ex);
       }
     });
+    // 以上代码等同于
+    /*if (!LANGUAGE_DRIVER_MAP.containsKey(cls)) {
+      try {
+        LANGUAGE_DRIVER_MAP.put(cls, cls.newInstance());
+      } catch (Exception ex) {
+        throw new ScriptingException("Failed to load language driver for " + cls.getName(), ex);
+      }
+    }*/
   }
 
   public void register(LanguageDriver instance) {
     if (instance == null) {
       throw new IllegalArgumentException("null is not a valid Language Driver");
     }
+    // 添加到LANGUAGE_DRIVER_MAP中
     Class<? extends LanguageDriver> cls = instance.getClass();
     if (!LANGUAGE_DRIVER_MAP.containsKey(cls)) {
       LANGUAGE_DRIVER_MAP.put(cls, instance);
@@ -62,8 +79,14 @@ public class LanguageDriverRegistry {
     return defaultDriverClass;
   }
 
+  /**
+   * 设置 {@link #defaultDriverClass}
+   * @param defaultDriverClass 默认的LanguageDriver类
+   */
   public void setDefaultDriverClass(Class<? extends LanguageDriver> defaultDriverClass) {
+    // 注册到LANGUAGE_DRIVER_MAP中
     register(defaultDriverClass);
+    // 设置defaultDriverClass属性
     this.defaultDriverClass = defaultDriverClass;
   }
 
