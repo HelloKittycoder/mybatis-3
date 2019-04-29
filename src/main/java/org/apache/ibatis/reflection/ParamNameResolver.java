@@ -95,7 +95,7 @@ public class ParamNameResolver {
       // 添加到map中
       map.put(paramIndex, name);
     }
-    // 构建不可变结合
+    // 构建不可变集合
     names = Collections.unmodifiableSortedMap(map);
   }
 

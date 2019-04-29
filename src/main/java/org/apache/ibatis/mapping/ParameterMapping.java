@@ -23,20 +23,51 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 参数映射
  * @author Clinton Begin
  */
 public class ParameterMapping {
 
   private Configuration configuration;
 
+  /**
+   * 属性的名字
+   */
   private String property;
+  /**
+   * 参数类型
+   * 目前只需要关注ParameterMode.IN的情况，另外的OUT、INOUT是在存储过程中使用，暂时无视
+   */
   private ParameterMode mode;
+  /**
+   * Java类型
+   */
   private Class<?> javaType = Object.class;
+  /**
+   * JDBC类型
+   */
   private JdbcType jdbcType;
+  /**
+   * 对于数值类型，还有一个小数保留位数的设置，来确定小数点后保留的位数
+   */
   private Integer numericScale;
+  /**
+   * TypeHandler对象
+   * {@link Builder#resolveTypeHandler()}
+   */
   private TypeHandler<?> typeHandler;
+  /**
+   * 貌似只在ParameterMode用到，OUT、INOUT是在存储过程中使用
+   */
   private String resultMapId;
+  /**
+   * 貌似只在ParameterMode用到，OUT、INOUT是在存储过程中使用
+   */
   private String jdbcTypeName;
+  /**
+   * 表达式
+   * ps：目前暂时不支持
+   */
   private String expression;
 
   private ParameterMapping() {
@@ -122,9 +153,11 @@ public class ParameterMapping {
     }
 
     private void resolveTypeHandler() {
+      // 如果不存在typeHandler，并且javaType非空，则基于javaType+jdbcType获得对应的TypeHandler对象
       if (parameterMapping.typeHandler == null && parameterMapping.javaType != null) {
         Configuration configuration = parameterMapping.configuration;
         TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
+        // 基于javaType+jdbcType获得对应的TypeHandler对象
         parameterMapping.typeHandler = typeHandlerRegistry.getTypeHandler(parameterMapping.javaType, parameterMapping.jdbcType);
       }
     }

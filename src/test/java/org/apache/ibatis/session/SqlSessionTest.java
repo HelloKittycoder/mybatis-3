@@ -229,8 +229,13 @@ class SqlSessionTest extends BaseDataTest {
   @Test
   void shouldSelectOneAuthorWithInlineParams() {
     try (SqlSession session = sqlMapper.openSession()) {
+      /* 写法一：
       Author author = session.selectOne(
-          "org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthorWithInlineParams", new Author(101));
+          "org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthorWithInlineParams", new Author(101));*/
+
+      // 写法二：
+      Author author = session.selectOne(
+              "org.apache.ibatis.domain.blog.mappers.AuthorMapper.selectAuthorWithInlineParams", 101);
       assertEquals(101, author.getId());
     }
   }

@@ -5,9 +5,7 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,6 +16,7 @@ import java.util.stream.Stream;
 public class StreamTest {
 
     private List<Person> personList;
+    private Map<String, Object> map;
 
     // 准备数据
     @BeforeEach
@@ -29,6 +28,11 @@ public class StreamTest {
         personList.add(p);
         p = new Person("3", "王五", 30);
         personList.add(p);
+
+        map = new HashMap<>();
+        map.put("1", "11");
+        map.put("2", "22");
+        map.put("3", "33");
     }
 
     @Test
@@ -126,5 +130,22 @@ public class StreamTest {
                 .sorted(Integer::compareTo)
                 .collect(Collectors.toList());
         System.out.println(sortedList);
+    }
+
+    // 遍历Map数据
+    // 见方法 org.apache.ibatis.scripting.xmltags.DynamicSqlSource#getBoundSql
+    @Test
+    public void test10() {
+        // 写法一：
+        map.forEach(this::printMapEntry);
+
+        // 写法二：
+        /*for (Map.Entry<String, Object> entry : map.entrySet()) {
+            printMapEntry(entry.getKey(), entry.getValue());
+        }*/
+    }
+
+    public void printMapEntry(String name, Object value) {
+        System.out.println("键：" + name + "============值：" + value);
     }
 }

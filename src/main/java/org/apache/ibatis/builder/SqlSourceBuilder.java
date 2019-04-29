@@ -39,22 +39,44 @@ public class SqlSourceBuilder extends BaseBuilder {
     super(configuration);
   }
 
+  /**
+   * 执行解析原始SQL，成为SqlSource对象
+   * @param originalSql 原始SQL
+   * @param parameterType 参数类型
+   * @param additionalParameters 附加参数集合。可能是空集合，
+   *                             也可能是 {@link org.apache.ibatis.scripting.xmltags.DynamicContext#bindings} 集合
+   * @return SqlSource对象
+   */
   public SqlSource parse(String originalSql, Class<?> parameterType, Map<String, Object> additionalParameters) {
+    // <1> 创建ParameterMappingTokenHandler对象
     ParameterMappingTokenHandler handler = new ParameterMappingTokenHandler(configuration, parameterType, additionalParameters);
+    // <2> 创建GenericTokenParser对象
     GenericTokenParser parser = new GenericTokenParser("#{", "}", handler);
+    // <3> 执行解析
     String sql = parser.parse(originalSql);
+    // <4> 创建StaticSqlSource对象
     return new StaticSqlSource(configuration, sql, handler.getParameterMappings());
   }
 
   private static class ParameterMappingTokenHandler extends BaseBuilder implements TokenHandler {
 
+    /**
+     * ParameterMapping数组
+     */
     private List<ParameterMapping> parameterMappings = new ArrayList<>();
+    /**
+     * 参数类型
+     */
     private Class<?> parameterType;
+    /**
+     * additionalParameters参数对应的MetaObject对象
+     */
     private MetaObject metaParameters;
 
     public ParameterMappingTokenHandler(Configuration configuration, Class<?> parameterType, Map<String, Object> additionalParameters) {
       super(configuration);
       this.parameterType = parameterType;
+      // 创建additionalParameters参数对应的MetaObject对象
       this.metaParameters = configuration.newMetaObject(additionalParameters);
     }
 
@@ -64,14 +86,19 @@ public class SqlSourceBuilder extends BaseBuilder {
 
     @Override
     public String handleToken(String content) {
+      // <1> 构建ParameterMapping对象，并添加到parameterMappings中
       parameterMappings.add(buildParameterMapping(content));
+      // <2> 返回?占位符
       return "?";
     }
 
+    // 构建ParameterMapping对象
     private ParameterMapping buildParameterMapping(String content) {
+      // <1> 解析成Map集合
       Map<String, String> propertiesMap = parseParameterMapping(content);
-      String property = propertiesMap.get("property");
-      Class<?> propertyType;
+      // <2> 获得属性的名字和类型
+      String property = propertiesMap.get("property"); // 名字
+      Class<?> propertyType; // 类型
       if (metaParameters.hasGetter(property)) { // issue #448 get type from additional params
         propertyType = metaParameters.getGetterType(property);
       } else if (typeHandlerRegistry.hasTypeHandler(parameterType)) {
@@ -88,7 +115,9 @@ public class SqlSourceBuilder extends BaseBuilder {
           propertyType = Object.class;
         }
       }
+      // <3> 创建ParameterMapping.Builder对象
       ParameterMapping.Builder builder = new ParameterMapping.Builder(configuration, property, propertyType);
+      // <3.1> 初始化ParameterMapping.Builder对象的属性
       Class<?> javaType = propertyType;
       String typeHandlerAlias = null;
       for (Map.Entry<String, String> entry : propertiesMap.entrySet()) {
@@ -117,12 +146,15 @@ public class SqlSourceBuilder extends BaseBuilder {
           throw new BuilderException("An invalid property '" + name + "' was found in mapping #{" + content + "}.  Valid properties are " + PARAMETER_PROPERTIES);
         }
       }
+      // <3.2> 如果typeHandlerAlias非空，则获得对应的TypeHandler对象，并设置到ParameterMapping.Builder对象中
       if (typeHandlerAlias != null) {
         builder.typeHandler(resolveTypeHandler(javaType, typeHandlerAlias));
       }
+      // <3.3> 创建ParameterMapping对象
       return builder.build();
     }
 
+    // 解析成Map集合
     private Map<String, String> parseParameterMapping(String content) {
       try {
         return new ParameterExpression(content);

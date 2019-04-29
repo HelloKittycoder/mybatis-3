@@ -25,7 +25,13 @@ import java.lang.reflect.Method;
  */
 public final class ProviderContext {
 
+  /**
+   * Mapper接口
+   */
   private final Class<?> mapperType;
+  /**
+   * Mapper的方法
+   */
   private final Method mapperMethod;
   private final String databaseId;
 

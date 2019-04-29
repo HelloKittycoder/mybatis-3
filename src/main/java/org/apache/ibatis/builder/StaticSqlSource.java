@@ -23,11 +23,18 @@ import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.session.Configuration;
 
 /**
+ * 静态的SqlSource实现类
  * @author Clinton Begin
  */
 public class StaticSqlSource implements SqlSource {
 
+  /**
+   * 静态的SQL
+   */
   private final String sql;
+  /**
+   * ParameterMapping集合
+   */
   private final List<ParameterMapping> parameterMappings;
   private final Configuration configuration;
 
@@ -40,9 +47,10 @@ public class StaticSqlSource implements SqlSource {
     this.parameterMappings = parameterMappings;
     this.configuration = configuration;
   }
-
+  // 测试方法见 org.apache.ibatis.session.SqlSessionTest#shouldSelectOneAuthorWithInlineParams
   @Override
   public BoundSql getBoundSql(Object parameterObject) {
+    // 创建BoundSql对象
     return new BoundSql(configuration, sql, parameterMappings, parameterObject);
   }
 
