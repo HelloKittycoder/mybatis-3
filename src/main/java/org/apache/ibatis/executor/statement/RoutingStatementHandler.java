@@ -30,14 +30,20 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 /**
+ * 路由的StatementHandler对象，根据Statement类型，
+ * 转发到对应的StatementHandler实现类中
  * @author Clinton Begin
  */
 public class RoutingStatementHandler implements StatementHandler {
 
+  /**
+   * 被委托的StatementHandler对象
+   */
   private final StatementHandler delegate;
 
   public RoutingStatementHandler(Executor executor, MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
 
+    // 根据不同的类型，创建对应的StatementHandler实现类
     switch (ms.getStatementType()) {
       case STATEMENT:
         delegate = new SimpleStatementHandler(executor, ms, parameter, rowBounds, resultHandler, boundSql);
@@ -54,6 +60,7 @@ public class RoutingStatementHandler implements StatementHandler {
 
   }
 
+  // 所有的实现方法，调用delegate对应的方法即可
   @Override
   public Statement prepare(Connection connection, Integer transactionTimeout) throws SQLException {
     return delegate.prepare(connection, transactionTimeout);

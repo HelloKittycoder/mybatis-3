@@ -26,30 +26,76 @@ import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.session.ResultHandler;
 
 /**
+ * Statement处理器，其中Statement包含java.sql.Statement、java.sql.PreparedStatement、
+ * java.sql.CallableStatement
  * @author Clinton Begin
  */
 public interface StatementHandler {
 
+  /**
+   * 准备操作，可以理解成创建Statement对象
+   * @param connection Connection对象
+   * @param transactionTimeout 事务超时时间
+   * @return Statement对象
+   * @throws SQLException
+   */
   Statement prepare(Connection connection, Integer transactionTimeout)
       throws SQLException;
 
+  /**
+   * 设置Statement对象的参数
+   * @param statement Statement对象
+   * @throws SQLException
+   */
   void parameterize(Statement statement)
       throws SQLException;
 
+  /**
+   * 添加Statement对象的批量操作
+   * @param statement Statement对象
+   * @throws SQLException
+   */
   void batch(Statement statement)
       throws SQLException;
 
+  /**
+   * 执行写操作
+   * @param statement Statement对象
+   * @return 影响的条数
+   * @throws SQLException
+   */
   int update(Statement statement)
       throws SQLException;
 
+  /**
+   * 执行读操作
+   * @param statement Statement对象
+   * @param resultHandler ResultHandler对象，处理结果
+   * @param <E> 泛型
+   * @return 读取的结果
+   * @throws SQLException
+   */
   <E> List<E> query(Statement statement, ResultHandler resultHandler)
       throws SQLException;
 
+  /**
+   * 执行读操作，返回Cursor对象
+   * @param statement Statement对象
+   * @param <E> 泛型
+   * @return Cursor对象
+   * @throws SQLException
+   */
   <E> Cursor<E> queryCursor(Statement statement)
       throws SQLException;
 
+  /**
+   * @return BoundSql对象
+   */
   BoundSql getBoundSql();
 
+  /**
+   * @return ParameterHandler对象
+   */
   ParameterHandler getParameterHandler();
 
 }
