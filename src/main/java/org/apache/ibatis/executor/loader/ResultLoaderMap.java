@@ -279,6 +279,9 @@ public class ResultLoaderMap {
     }
   }
 
+  /**
+   * 已经关闭的Executor实现类
+   */
   private static final class ClosedExecutor extends BaseExecutor {
 
     public ClosedExecutor() {

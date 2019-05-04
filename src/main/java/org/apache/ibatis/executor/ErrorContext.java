@@ -16,6 +16,8 @@
 package org.apache.ibatis.executor;
 
 /**
+ * 错误上下文，负责记录错误日志
+ * https://www.jianshu.com/p/2af47a3e473c
  * @author Clinton Begin
  */
 public class ErrorContext {
