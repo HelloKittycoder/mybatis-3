@@ -19,14 +19,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.ibatis.binding.MapperMethod.ParamMap;
@@ -42,6 +35,8 @@ import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
 /**
+ * 实现KeyGenerator接口，基于Statement#getGeneratedKeys()方法的KeyGenerator实现类，
+ * 适用于MySQL、H2主键生成
  * @author Clinton Begin
  * @author Kazuki Shimizu
  */
@@ -50,25 +45,31 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
   /**
    * A shared instance.
    *
+   * 共享的单例
+   *
    * @since 3.4.3
    */
   public static final Jdbc3KeyGenerator INSTANCE = new Jdbc3KeyGenerator();
 
+  // 空实现。因为对于Jdbc3KeyGenerator类的主键，是在SQl执行后，才生成
   @Override
   public void processBefore(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
     // do nothing
   }
 
+  // 处理返回的自增主键。单个parameter参数，可以认为是批量的一个特例
   @Override
   public void processAfter(Executor executor, MappedStatement ms, Statement stmt, Object parameter) {
     processBatch(ms, stmt, parameter);
   }
 
   public void processBatch(MappedStatement ms, Statement stmt, Object parameter) {
+    // <1> 获得主键属性的配置。如果为空，则直接返回，说明不需要主键
     final String[] keyProperties = ms.getKeyProperties();
     if (keyProperties == null || keyProperties.length == 0) {
       return;
     }
+    // <2> 获得返回的自增主键
     try (ResultSet rs = stmt.getGeneratedKeys()) {
       final ResultSetMetaData rsmd = rs.getMetaData();
       final Configuration configuration = ms.getConfiguration();
@@ -87,19 +88,23 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
       Object parameter) throws SQLException {
     if (parameter instanceof ParamMap || parameter instanceof StrictMap) {
       // Multi-param or single param with @Param
+      // 单个或多个带有@Param的参数
       assignKeysToParamMap(configuration, rs, rsmd, keyProperties, (Map<String, ?>) parameter);
     } else if (parameter instanceof ArrayList && !((ArrayList<?>) parameter).isEmpty()
         && ((ArrayList<?>) parameter).get(0) instanceof ParamMap) {
       // Multi-param or single param with @Param in batch operation
+      // 批量操作中单个或多个带有@Param的参数
       assignKeysToParamMapList(configuration, rs, rsmd, keyProperties, ((ArrayList<ParamMap<?>>) parameter));
     } else {
       // Single param without @Param
+      // 单个不带@Param的参数
       assignKeysToParam(configuration, rs, rsmd, keyProperties, parameter);
     }
   }
 
   private void assignKeysToParam(Configuration configuration, ResultSet rs, ResultSetMetaData rsmd,
       String[] keyProperties, Object parameter) throws SQLException {
+    // 包装成Collection对象
     Collection<?> params = collectionize(parameter);
     if (params.isEmpty()) {
       return;
@@ -108,9 +113,11 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
     for (int i = 0; i < keyProperties.length; i++) {
       assignerList.add(new KeyAssigner(configuration, rsmd, i + 1, null, keyProperties[i]));
     }
+    // 遍历params数组
     Iterator<?> iterator = params.iterator();
     while (rs.next()) {
       Object param = iterator.next();
+      // 挨个给对象的主键赋值
       assignerList.forEach(x -> x.assign(rs, param));
     }
   }
@@ -234,8 +241,10 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
         // If paramName is set, param is ParamMap
         param = ((ParamMap<?>) param).get(paramName);
       }
+      // 获取参数的MetaObject对象
       MetaObject metaParam = configuration.newMetaObject(param);
       try {
+        // 获得对象中属性的typeHandler
         if (typeHandler == null) {
           if (metaParam.hasSetter(propertyName)) {
             Class<?> propertyType = metaParam.getSetterType(propertyName);
@@ -249,7 +258,9 @@ public class Jdbc3KeyGenerator implements KeyGenerator {
         if (typeHandler == null) {
           // Error?
         } else {
+          // 通过typeHandler获取结果集中指定列的值，得到数据库中主键列的值
           Object value = typeHandler.getResult(rs, columnPosition);
+          // 把数据库中的主键列的值赋给java对象的指定属性
           metaParam.setValue(propertyName, value);
         }
       } catch (SQLException e) {
