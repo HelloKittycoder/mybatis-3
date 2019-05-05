@@ -20,12 +20,23 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 拦截器Interceptor链
  * @author Clinton Begin
  */
 public class InterceptorChain {
 
+  /**
+   * 拦截器数据
+   */
   private final List<Interceptor> interceptors = new ArrayList<>();
 
+  /**
+   * 应用所有拦截器到指定目标对象
+   * 共有四种目标对象类型可以被拦截：Executor、StatementHandler、
+   * ParameterHandler、ResultSetHandler
+   * @param target 目标对象
+   * @return 应用结果
+   */
   public Object pluginAll(Object target) {
     for (Interceptor interceptor : interceptors) {
       target = interceptor.plugin(target);
@@ -33,6 +44,8 @@ public class InterceptorChain {
     return target;
   }
 
+  // 添加拦截器
+  // 该方法在 XMLConfigBuilder#pluginElement(XNode parent) 方法中被调用
   public void addInterceptor(Interceptor interceptor) {
     interceptors.add(interceptor);
   }

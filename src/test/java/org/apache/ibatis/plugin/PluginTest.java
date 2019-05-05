@@ -40,19 +40,19 @@ class PluginTest {
   }
 
   @Intercepts({
-      @Signature(type = Map.class, method = "get", args = {Object.class})})
+      @Signature(type = Map.class, method = "get", args = {Object.class})}) // <1>
   public static class AlwaysMapPlugin implements Interceptor {
-    @Override
+    @Override // <4> 当所有的target类型为Map类型，并且调用Map#get(Object)方法时，返回的都是“Always”
     public Object intercept(Invocation invocation) {
       return "Always";
     }
 
-    @Override
+    @Override // <2> 执行代理对象的创建
     public Object plugin(Object target) {
       return Plugin.wrap(target, this);
     }
 
-    @Override
+    @Override // <3> 可以从properties中获取一些需要的属性值
     public void setProperties(Properties properties) {
     }
   }
