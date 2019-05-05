@@ -30,6 +30,7 @@ import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
 /**
+ * SqlSession管理器
  * @author Larry Meadors
  */
 public class SqlSessionManager implements SqlSessionFactory, SqlSession {
@@ -37,16 +38,21 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
   private final SqlSessionFactory sqlSessionFactory;
   private final SqlSession sqlSessionProxy;
 
+  /**
+   * 线程变量，当前线程的SqlSession对象
+   */
   private final ThreadLocal<SqlSession> localSqlSession = new ThreadLocal<>();
 
   private SqlSessionManager(SqlSessionFactory sqlSessionFactory) {
     this.sqlSessionFactory = sqlSessionFactory;
+    // <2> 创建SqlSession的代理对象
     this.sqlSessionProxy = (SqlSession) Proxy.newProxyInstance(
         SqlSessionFactory.class.getClassLoader(),
         new Class[]{SqlSession.class},
         new SqlSessionInterceptor());
   }
 
+  // 创建SqlSessionManager对象
   public static SqlSessionManager newInstance(Reader reader) {
     return new SqlSessionManager(new SqlSessionFactoryBuilder().build(reader, null, null));
   }
@@ -75,6 +81,7 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return new SqlSessionManager(sqlSessionFactory);
   }
 
+  // 发起一个可被管理的SqlSession
   public void startManagedSession() {
     this.localSqlSession.set(openSession());
   }
@@ -156,6 +163,7 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return sqlSessionFactory.getConfiguration();
   }
 
+  // 对SqlSession的实现方法
   @Override
   public <T> T selectOne(String statement) {
     return sqlSessionProxy.selectOne(statement);
@@ -337,6 +345,10 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     }
   }
 
+  /**
+   * 是SqlSessionManager内部类，实现InvocationHandler接口，
+   * 实现对sqlSessionProxy的调用的拦截
+   */
   private class SqlSessionInterceptor implements InvocationHandler {
     public SqlSessionInterceptor() {
         // Prevent Synthetic Access
@@ -344,20 +356,27 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      // 情况一：如果localSqlSession中存在SqlSession对象，说明是自管理模式
       final SqlSession sqlSession = SqlSessionManager.this.localSqlSession.get();
       if (sqlSession != null) {
         try {
+          // 直接执行方法
           return method.invoke(sqlSession, args);
         } catch (Throwable t) {
           throw ExceptionUtil.unwrapThrowable(t);
         }
+      // 情况二：如果没有SqlSession对象，则直接创建一个
       } else {
-        try (SqlSession autoSqlSession = openSession()) {
+        // 创建新的SqlSession对象
+        try (SqlSession autoSqlSession = openSession()) { // 同时，通过try的语法糖，实现结束时，关闭SqlSession对象
           try {
+            // 执行方法
             final Object result = method.invoke(autoSqlSession, args);
+            // 提交SqlSession对象
             autoSqlSession.commit();
             return result;
           } catch (Throwable t) {
+            // 发生异常时，回滚
             autoSqlSession.rollback();
             throw ExceptionUtil.unwrapThrowable(t);
           }

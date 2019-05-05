@@ -26,6 +26,7 @@ import org.apache.ibatis.executor.BatchResult;
 /**
  * The primary Java interface for working with MyBatis.
  * Through this interface you can execute commands, get mappers and manage transactions.
+ * SQL Session接口
  *
  * @author Clinton Begin
  */
@@ -33,6 +34,7 @@ public interface SqlSession extends Closeable {
 
   /**
    * Retrieve a single row mapped from the statement key.
+   * 根据查询语句查询出一行数据
    * @param <T> the returned object type
    * @param statement
    * @return Mapped object
@@ -41,6 +43,7 @@ public interface SqlSession extends Closeable {
 
   /**
    * Retrieve a single row mapped from the statement key and parameter.
+   * 根据查询语句和参数查询出一行数据
    * @param <T> the returned object type
    * @param statement Unique identifier matching the statement to use.
    * @param parameter A parameter object to pass to the statement.
@@ -50,6 +53,7 @@ public interface SqlSession extends Closeable {
 
   /**
    * Retrieve a list of mapped objects from the statement key and parameter.
+   * 根据查询语句查询出list
    * @param <E> the returned list element type
    * @param statement Unique identifier matching the statement to use.
    * @return List of mapped object
@@ -58,6 +62,7 @@ public interface SqlSession extends Closeable {
 
   /**
    * Retrieve a list of mapped objects from the statement key and parameter.
+   * 根据查询语句和参数查询出list
    * @param <E> the returned list element type
    * @param statement Unique identifier matching the statement to use.
    * @param parameter A parameter object to pass to the statement.
@@ -68,6 +73,7 @@ public interface SqlSession extends Closeable {
   /**
    * Retrieve a list of mapped objects from the statement key and parameter,
    * within the specified row bounds.
+   * 根据查询语句、参数和分页信息查询出list
    * @param <E> the returned list element type
    * @param statement Unique identifier matching the statement to use.
    * @param parameter A parameter object to pass to the statement.
