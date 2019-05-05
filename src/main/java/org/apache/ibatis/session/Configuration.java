@@ -131,6 +131,9 @@ public class Configuration {
   protected Integer defaultStatementTimeout;
   protected Integer defaultFetchSize;
   protected ExecutorType defaultExecutorType = ExecutorType.SIMPLE;
+  /**
+   * Configuration.autoMappingBehavior属性，默认为AutoMappingBehavior.PARTIAL
+   */
   protected AutoMappingBehavior autoMappingBehavior = AutoMappingBehavior.PARTIAL;
   protected AutoMappingUnknownColumnBehavior autoMappingUnknownColumnBehavior = AutoMappingUnknownColumnBehavior.NONE;
 
